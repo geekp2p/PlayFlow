@@ -1,0 +1,6 @@
+git config --global user.name "YourGitHubUsername"
+git config --global user.email "YourEmail@example.com"
+
+git clone https://github.com/geekp2p/PlayFlow.git
+
+git pull origin main
