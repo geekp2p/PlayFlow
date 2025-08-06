@@ -1,0 +1,20 @@
+sudo docker network create -d macvlan \
+  --subnet=192.168.88.0/24 \
+  --gateway=192.168.88.1 \
+  --ip-range=192.168.88.128/25 \
+  --aux-address="host=$(hostname -I | awk '{print $1}')" \
+  --driver-opt parent=eth0 \
+  macvlan88
+
+test temp docker
+
+docker run --rm \
+  --network macvlan88 \
+  busybox \
+  sh -c "ip addr show eth0"
+
+docker-compose.yml
+
+networks:
+  macvlan88:
+    external: true

@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ---- DHCP on eth0 if requested ----
+if [ "${FORCE_DHCP:-0}" = "1" ]; then
+  echo "[start] Releasing any existing DHCP lease..."
+  dhclient -r eth0 || true
+  echo "[start] Requesting DHCP on eth0..."
+  dhclient -v eth0 || echo "[start] dhclient failed"
+fi
+
+# Paths and environment
+export DISPLAY=${DISPLAY:-:0}
+export ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-/opt/android-sdk}
+export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-/root/.android/avd}
+export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$PATH
+TZ_NAME=${TZ:-Asia/Bangkok}
+
+# Sync licenses if necessary
+if [ -d /opt/android/licenses ] && [ ! -d "$ANDROID_SDK_ROOT/licenses" ]; then
+  echo "[start] Syncing pre-accepted licenses to SDK root"
+  mkdir -p "$ANDROID_SDK_ROOT/licenses"
+  cp -a /opt/android/licenses/. "$ANDROID_SDK_ROOT/licenses/"
+fi
+
+# Prepare SDK cache & system image
+if [ -x /usr/local/bin/prepare-android-cache.sh ]; then
+  echo "[start] Ensuring SDK + system image"
+  /usr/local/bin/prepare-android-cache.sh
+else
+  echo "[start] Warning: prepare-android-cache.sh missing"
+fi
+
+# Generate a minimal xorg.conf for dummy video driver
+cat >/etc/X11/xorg.conf <<'EOF'
+Section "Device"
+  Identifier "Card0"
+  Driver     "dummy"
+  VideoRam   256000
+EndSection
+
+Section "Monitor"
+  Identifier "Monitor0"
+  HorizSync   28.0-80.0
+  VertRefresh 48.0-75.0
+EndSection
+
+Section "Screen"
+  Identifier "Screen0"
+  Device     "Card0"
+  Monitor    "Monitor0"
+  DefaultDepth 24
+  SubSection "Display"
+    Depth 24
+    Modes "1080x1920"
+  EndSubSection
+EndSection
+EOF
+
+# Start Xorg (dummy)
+echo "[start] Launching Xorg..."
+Xorg -noreset +extension GLX +extension RANDR +extension RENDER \
+     -config /etc/X11/xorg.conf :0 \
+     -logfile /var/log/Xorg.log &
+XORG_PID=$!
+
+# Wait for X socket
+while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done
+
+# Start ADB server
+echo "[start] Starting ADB server..."
+adb start-server
+
+# Cleanup handler
+cleanup() {
+  echo "[start] Shutting down processes..."
+  kill $EMULATOR_PID $X11VNC_PID $NOVNC_PID $XORG_PID || true
+  exit 0
+}
+trap cleanup SIGINT SIGTERM
+
+# Launch emulator
+echo "[start] Launching Android emulator (${EMULATOR_DEVICE})..."
+emulator -avd "${EMULATOR_DEVICE}" \
+         -gpu "${GPU:-guest}" \
+         -memory "${MEMORY:-2048}" \
+         -cores "${CORES:-2}" \
+         -accel auto \
+         -no-window \
+         -no-audio \
+         -partition-size 512 \
+         -verbose &
+EMULATOR_PID=$!
+
+# Wait for emulator console to open
+sleep 5
+
+# Start x11vnc and noVNC
+echo "[start] Starting x11vnc..."
+x11vnc -forever -noxdamage -shared -rfbauth /root/.vnc/passwd -display :0 -rfbport 5900 &
+X11VNC_PID=$!
+
+echo "[start] Starting noVNC..."
+websockify --web=/opt/noVNC 6080 localhost:5900 &
+NOVNC_PID=$!
+
+# Post-boot tasks in background
+(
+  # Wait for ADB device
+  echo "[post] Waiting for emulator to appear..."
+  until adb devices | grep -q emulator-5555.*device; do sleep 2; done
+  echo "[post] Emulator is online"
+
+  # Wait for Android boot completion
+  echo "[post] Waiting for Android boot completion..."
+  boot_wait=0
+  until adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do
+    sleep 5
+    boot_wait=$((boot_wait+5))
+    if [ $boot_wait -ge 180 ]; then
+      echo "[post] Boot not complete after 180s, proceeding anyway"
+      break
+    fi
+  done
+
+  # Apply locale/timezone
+  echo "[post] Setting timezone & locale..."
+  adb emu geo fix 100.5018 13.7563
+  adb shell setprop persist.sys.timezone "$TZ_NAME" || true
+  adb shell setprop persist.sys.locale "th-TH" || true
+
+  # Install any APKs in /apks
+  echo "[post] Installing APKs..."
+  for apk in /apks/*.apk; do
+    [ -e "$apk" ] || continue
+    adb install -r "$apk" || echo "[post] Failed to install $apk"
+  done
+
+  # Pull contents of /sdcard/Download
+  echo "[post] Pulling /sdcard/Download..."
+  mkdir -p /downloads/Download
+  for f in $(adb shell ls /sdcard/Download | tr -d '\r'); do
+    adb pull "/sdcard/Download/$f" "/downloads/Download/$f"
+  done
+
+  # Save snapshot if not already done
+  SNAPSHOT_FLAG="$ANDROID_AVD_HOME/${EMULATOR_DEVICE}.avd/.saved_default_snapshot"
+  if [ ! -f "$SNAPSHOT_FLAG" ]; then
+    echo "[post] Saving snapshot..."
+    {
+      echo "snapshot save default"
+      sleep 1
+      echo "quit"
+    } | nc localhost 5554 || true
+    touch "$SNAPSHOT_FLAG"
+  fi
+
+  echo "[post] Post-boot tasks complete."
+) &
+
+# Wait indefinitely (until emulator exits)
+wait $EMULATOR_PID
