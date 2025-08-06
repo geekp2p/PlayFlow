@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Bytecode cache
+*.pyc
+*.pyo
+*.pyd
+*.pyc.*
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Environment variables
+.env
+.env.*
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node/npm (in case frontend expands)
+node_modules/
+package-lock.json
+yarn.lock
+
+# HTML/JS cache or build (if applicable later)
+dist/
+build/
+*.map
+
+# Docker
+*.pid
+*.bak
+*.old
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Shell / Batch
+*.bat~
+
+# adb-related (temporary cache or logs)
+adb.log
+adb_output.txt
+txt.txt

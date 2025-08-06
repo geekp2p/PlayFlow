@@ -17,7 +17,11 @@ git push -u origin main
 
 
 git add .
-git commit -m "test"
+git commit -m "remove test"
 git push -u origin main
 
 git push -u origin main --force
+
+git add .
+git commit -m "first update"
+git push -u origin main

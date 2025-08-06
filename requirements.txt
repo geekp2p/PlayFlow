@@ -1,0 +1,7 @@
+flask
+flask-socketio
+apscheduler
+uiautomator2
+eventlet
+websockets
+av==10.0.0

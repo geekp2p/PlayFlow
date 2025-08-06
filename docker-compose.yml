@@ -1,0 +1,24 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  playflow:
+    build: .
+    container_name: playflow
+    privileged: true
+    environment:
+      - TZ=Asia/Bangkok
+      - FORCE_DHCP=1
+    networks:
+      - macvlan88
+    volumes:
+      - ./app:/app
+
+networks:
+  macvlan88:
+    driver: macvlan
+    driver_opts:
+      parent: eth0
+    ipam:
+      driver: default
+      config: []
