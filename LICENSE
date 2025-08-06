@@ -672,3 +672,10 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
+
+[GoDevGod สัญญาส่วนเพิ่ม] – PlayFlow Dockerized Android emulator + Web UI for RPA/testing flows.
+ใช้เฉพาะ non-commercial; การใช้เชิงพาณิชย์ต้องมีข้อตกลงกับผู้พัฒนา (หรือทายาท/ตัวแทน) และแบ่งปันผลกำไรตามที่ตกลง
+บังคับ: ผู้พัฒนาต่อยอดต้องส่งโค้ดที่พัฒนาต่อกลับให้ผู้แต่งเสมอ และแจกจ่ายทั้งซอร์สและไบนารีให้สาธารณะ ยกเว้นได้รับข้อตกลงต่ออายุเป็นลายลักษณ์อักษร
+
+Free for non-commercial use; commercial use requires agreement with authors (or heirs/representatives) and profit sharing as agreed.
+Mandatory: downstream developers must submit all derivative code back to the authors and publish both source and binaries publicly, unless a renewal agreement is granted.
