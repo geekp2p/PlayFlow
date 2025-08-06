@@ -1,11 +1,20 @@
 git config --global user.name "geekp2p"
 git config --global user.email "geekp2p@gmail.com"
 
+git remote add origin https://github.com/geekp2p/PlayFlow.git
+
+
+
 git clone https://github.com/geekp2p/PlayFlow.git
 
 git pull origin main
 
 git remote -v
+
+git pull origin main
+git commit -m "Resolved merge conflicts"
+git push -u origin main
+
 
 git add .
 git commit -m "test"
