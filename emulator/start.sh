@@ -81,7 +81,6 @@ emulator -avd "${EMULATOR_DEVICE}" \
          -cores "${CORES:-2}" \
          -accel auto \
          -no-window \
-         -no-modem \
          -no-audio \
          -partition-size 512 \
          -verbose &
