@@ -51,6 +51,10 @@ RUN chmod +x /usr/local/bin/prepare-android-cache.sh
 COPY start.sh /usr/local/bin/start.sh
 RUN dos2unix /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
+# entrypoint หรือ CMD จะเป็นสคริปต์ start.sh
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
 # Start with our custom launch script
 ENTRYPOINT []
 CMD ["/usr/local/bin/start.sh"]

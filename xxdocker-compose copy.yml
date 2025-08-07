@@ -81,7 +81,7 @@ services:
           {"label":"LINE","pkg":"jp.naver.line.android"}
         ]
 
-    # ← ย้าย volumes มาระดับเดียวกับ environment/ports
+    # volumes ต้องอยู่ระดับเดียวกับ environment/ports ไม่ใช่ซ้อนใต้ environment
     volumes:
       - apks:/apks
       - android-keys:/root/.android

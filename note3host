@@ -1,0 +1,9 @@
+sudo apt update
+sudo apt install -y git
+
+cd ~
+git clone https://github.com/geekp2p/PlayFlow.git
+cd PlayFlow
+
+chmod +x setup_host.sh
+sudo ./setup_host.sh

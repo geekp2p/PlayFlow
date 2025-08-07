@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# บอกตำแหน่ง AVD
+export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-/root/.android/avd}
+
 # ---- DHCP on eth0 if requested ----
 if [ "${FORCE_DHCP:-0}" = "1" ]; then
   echo "[start] Releasing any existing DHCP lease..."

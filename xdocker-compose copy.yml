@@ -1,8 +1,5 @@
 version: "3.8"
 
-# -------------------------------------------------------------------
-# Networks & Volumes declaration
-# -------------------------------------------------------------------
 networks:
   macvlan88:
     external: true
@@ -14,9 +11,6 @@ volumes:
   avd_data:
   flows:
 
-# -------------------------------------------------------------------
-# Services
-# -------------------------------------------------------------------
 services:
   emulator:
     build:
@@ -28,26 +22,18 @@ services:
       - /dev/kvm:/dev/kvm
     networks:
       - macvlan88
-
     environment:
-      # เวลาโซน
-      TZ: Asia/Bangkok
-      # ขอ IP โดย DHCP ทุกครั้งที่สตาร์ท
       FORCE_DHCP: "1"
-      # ชื่อ AVD ที่จะสร้าง / เรียกใช้
+      TZ: Asia/Bangkok
       EMULATOR_DEVICE: emu-33-playstore
-      # RAM, CPU cores, GPU backend
       MEMORY: "6144"
       CORES: "4"
       GPU: "swiftshader_indirect"
-
     volumes:
-      # ตำแหน่งเก็บ APK, license และ cache SDK
       - apks:/apks
       - android-keys:/root/.android
       - android_sdk_cache:/opt/android-sdk
       - avd_data:/root/.android/avd
-
     healthcheck:
       test: ["CMD-SHELL", "adb devices | grep -q emulator-5554.*device"]
       interval: 15s
@@ -62,33 +48,27 @@ services:
     depends_on:
       emulator:
         condition: service_healthy
+    # network_mode: service:emulator
     networks:
       - macvlan88
     ports:
       - "5001:5000"
-
     environment:
-      # เวลาโซน
-      TZ: Asia/Bangkok
-      # ตั้งค่า ADB
       ADB_SERVER_SOCKET: tcp:127.0.0.1:5037
       DEVICE_SERIAL: emulator-5555
       INSTANCE_NAME: pf_emulator
-      # แอปที่จะสั่ง automate
       DROIDFLOW_APPS: >-
         [
           {"label":"KSHOP","pkg":"com.kasikornbank.kpaymerchant"},
           {"label":"LINE","pkg":"jp.naver.line.android"}
         ]
-
-    # ← ย้าย volumes มาระดับเดียวกับ environment/ports
+      TZ: Asia/Bangkok
     volumes:
       - apks:/apks
-      - android-keys:/root/.android
       - flows:/app/flows
-
+      - android-keys:/root/.android
     healthcheck:
-      test: ["CMD-SHELL", "adb -H 127.0.0.1 -P 5037 devices | grep -q emulator-5555.*device"]
+      test: ["CMD-SHELL", "adb devices | grep -q emulator-5555.*device"]
       interval: 15s
       timeout: 10s
       retries: 5

@@ -1,0 +1,10 @@
+sudo docker network create -d macvlan \
+  --subnet=192.168.88.0/24 \
+  --gateway=192.168.88.1 \
+  -o parent=ens33 macvlan88
+
+
+
+
+
+sudo docker network create -d macvlan --subnet=192.168.88.0/24 --gateway=192.168.88.1 -o parent=ens33 macvlan88

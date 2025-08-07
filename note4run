@@ -1,0 +1,17 @@
+
+
+
+
+
+
+
+
+
+
+
+sudo docker compose build droidflow
+
+sudo docker compose build --no-cache
+
+sudo docker compose build --no-cache emulator
+sudo docker compose build --no-cache droidflow
