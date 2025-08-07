@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# บอกตำแหน่ง AVD
+# AVD directory
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-/root/.android/avd}
 
 # ---- DHCP on eth0 if requested ----
@@ -15,7 +15,6 @@ fi
 # Paths and environment
 export DISPLAY=${DISPLAY:-:0}
 export ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-/opt/android-sdk}
-export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-/root/.android/avd}
 export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$PATH
 TZ_NAME=${TZ:-Asia/Bangkok}
 
@@ -24,14 +23,6 @@ if [ -d /opt/android/licenses ] && [ ! -d "$ANDROID_SDK_ROOT/licenses" ]; then
   echo "[start] Syncing pre-accepted licenses to SDK root"
   mkdir -p "$ANDROID_SDK_ROOT/licenses"
   cp -a /opt/android/licenses/. "$ANDROID_SDK_ROOT/licenses/"
-fi
-
-# Prepare SDK cache & system image
-if [ -x /usr/local/bin/prepare-android-cache.sh ]; then
-  echo "[start] Ensuring SDK + system image"
-  /usr/local/bin/prepare-android-cache.sh
-else
-  echo "[start] Warning: prepare-android-cache.sh missing"
 fi
 
 # Generate a minimal xorg.conf for dummy video driver
@@ -77,7 +68,7 @@ adb start-server
 # Cleanup handler
 cleanup() {
   echo "[start] Shutting down processes..."
-  kill $EMULATOR_PID $X11VNC_PID $NOVNC_PID $XORG_PID || true
+  kill "$EMULATOR_PID" "$X11VNC_PID" "$NOVNC_PID" "$XORG_PID" || true
   exit 0
 }
 trap cleanup SIGINT SIGTERM
@@ -95,7 +86,7 @@ emulator -avd "${EMULATOR_DEVICE}" \
          -verbose &
 EMULATOR_PID=$!
 
-# Wait for emulator console to open
+# Give emulator a moment to start up console
 sleep 5
 
 # Start x11vnc and noVNC
@@ -109,12 +100,10 @@ NOVNC_PID=$!
 
 # Post-boot tasks in background
 (
-  # Wait for ADB device
   echo "[post] Waiting for emulator to appear..."
   until adb devices | grep -q emulator-5555.*device; do sleep 2; done
   echo "[post] Emulator is online"
 
-  # Wait for Android boot completion
   echo "[post] Waiting for Android boot completion..."
   boot_wait=0
   until adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do
@@ -126,27 +115,23 @@ NOVNC_PID=$!
     fi
   done
 
-  # Apply locale/timezone
   echo "[post] Setting timezone & locale..."
   adb emu geo fix 100.5018 13.7563
   adb shell setprop persist.sys.timezone "$TZ_NAME" || true
   adb shell setprop persist.sys.locale "th-TH" || true
 
-  # Install any APKs in /apks
-  echo "[post] Installing APKs..."
+  echo "[post] Installing any APKs in /apks..."
   for apk in /apks/*.apk; do
     [ -e "$apk" ] || continue
     adb install -r "$apk" || echo "[post] Failed to install $apk"
   done
 
-  # Pull contents of /sdcard/Download
   echo "[post] Pulling /sdcard/Download..."
   mkdir -p /downloads/Download
   for f in $(adb shell ls /sdcard/Download | tr -d '\r'); do
     adb pull "/sdcard/Download/$f" "/downloads/Download/$f"
   done
 
-  # Save snapshot if not already done
   SNAPSHOT_FLAG="$ANDROID_AVD_HOME/${EMULATOR_DEVICE}.avd/.saved_default_snapshot"
   if [ ! -f "$SNAPSHOT_FLAG" ]; then
     echo "[post] Saving snapshot..."
@@ -161,5 +146,5 @@ NOVNC_PID=$!
   echo "[post] Post-boot tasks complete."
 ) &
 
-# Wait indefinitely (until emulator exits)
-wait $EMULATOR_PID
+# Wait indefinitely
+wait "$EMULATOR_PID"

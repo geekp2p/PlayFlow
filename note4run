@@ -15,3 +15,5 @@ sudo docker compose build --no-cache
 
 sudo docker compose build --no-cache emulator
 sudo docker compose build --no-cache droidflow
+
+docker compose run --rm pf_emulator bash

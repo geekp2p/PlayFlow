@@ -1,16 +1,22 @@
-# Base image with Android Play Store emulator for API 33
+# emulator/Dockerfile
+
+# (0) Base image
 FROM halimqarroum/docker-android:api-33-playstore
 
-# Set up SDK and emulator paths
-ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-ENV ANDROID_EMULATOR_HOME=/root/.android
-ENV ANDROID_AVD_HOME=/root/.android/avd
-ENV PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$PATH
+# (1) ให้บิวด์รู้จัก EMULATOR_DEVICE
+ARG EMULATOR_DEVICE=emu-33-playstore
+ENV EMULATOR_DEVICE=${EMULATOR_DEVICE}
+
+# (2) ENV พื้นฐาน
+ENV ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_HOME=/opt/android-sdk \
+    ANDROID_EMULATOR_HOME=/root/.android \
+    ANDROID_AVD_HOME=/root/.android/avd \
+    PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/emulator:/opt/android-sdk/platform-tools:$PATH
 
 USER root
 
-# (Optional) Copy any pre-accepted licenses into place
+# (3) ใส่ licenses
 COPY licenses/ $ANDROID_SDK_ROOT/licenses/
 RUN if [ -d $ANDROID_SDK_ROOT/licenses ]; then \
       chmod -R a+r $ANDROID_SDK_ROOT/licenses && \
@@ -18,20 +24,10 @@ RUN if [ -d $ANDROID_SDK_ROOT/licenses ]; then \
       cp -a $ANDROID_SDK_ROOT/licenses/. /opt/android/licenses; \
     fi
 
-# Install required packages, VNC server and noVNC
+# (4) ติดตั้งแพ็กเกจที่ต้องใช้
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      isc-dhcp-client \
-      git \
-      dos2unix \
-      xserver-xorg-core \
-      xserver-xorg-video-dummy \
-      libgl1-mesa-dri \
-      libgl1-mesa-glx \
-      x11vnc \
-      websockify \
-      netcat-openbsd \
-      dnsutils \
-      iputils-ping \
+      isc-dhcp-client git dos2unix xserver-xorg-core xserver-xorg-video-dummy \
+      libgl1-mesa-dri libgl1-mesa-glx x11vnc websockify netcat-openbsd dnsutils iputils-ping \
     && rm -rf /var/lib/apt/lists/* \
     && git clone https://github.com/novnc/noVNC.git /opt/noVNC \
     && ln -sf /opt/noVNC/vnc.html /opt/noVNC/index.html \
@@ -44,17 +40,13 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     && mkdir -p /root/.vnc \
     && x11vnc -storepasswd android /root/.vnc/passwd
 
-# Copy helper scripts into the image
+# (5) เตรียม SDK + system-image (arm64-v8a) + สร้าง AVD
 COPY prepare-android-cache.sh /usr/local/bin/prepare-android-cache.sh
-RUN chmod +x /usr/local/bin/prepare-android-cache.sh
+RUN chmod +x /usr/local/bin/prepare-android-cache.sh \
+ && /usr/local/bin/prepare-android-cache.sh
 
+# (6) คัดลอก start.sh และตั้งเป็น ENTRYPOINT
 COPY start.sh /usr/local/bin/start.sh
 RUN dos2unix /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
-# entrypoint หรือ CMD จะเป็นสคริปต์ start.sh
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-# Start with our custom launch script
-ENTRYPOINT []
-CMD ["/usr/local/bin/start.sh"]
+ENTRYPOINT ["/usr/local/bin/start.sh"]
