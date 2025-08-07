@@ -65,3 +65,20 @@ desktop.ini
 adb.log
 adb_output.txt
 txt.txt
+
+# ————————————————————————
+# Emulator license files (ทั้งโฟลเดอร์ย่อยซ้อนกัน)
+# ————————————————————————
+/emulator/licenses/
+
+# ————————————————————————
+# Local note/run scripts
+# ————————————————————————
+/note3host
+/note4run
+/note5hostnetwork
+
+# ————————————————————————
+# สำเนา docker-compose (มีช่องว่างในชื่อไฟล์ ให้ escape space)
+/xdocker-compose\ copy.yml
+/xxdocker-compose\ copy.yml
