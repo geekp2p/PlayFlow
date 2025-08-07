@@ -1,4 +1,3 @@
-# droidflow/docker-entrypoint.sh
 #!/usr/bin/env sh
 set -e
 
