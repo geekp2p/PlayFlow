@@ -56,13 +56,15 @@ yes | "$SDKMANAGER_CMD" \
     "system-images;android-33;google_apis_playstore;x86_64" || true
 
 # สร้าง AVD ถ้ายังไม่มี
-if ! avdmanager list avd | grep -q "${EMULATOR_DEVICE}"; then
-  echo "Creating AVD ${EMULATOR_DEVICE}..."
-  # ตอบ "no" ให้ avdmanager (don’t use custom hardware profile)
+if ! avdmanager list avd | grep -q "^${EMULATOR_DEVICE}$"; then
+  echo "Creating AVD ${EMULATOR_DEVICE}…"
+  # ตอบ "no" (don’t use custom hardware profile)
   printf "no\n" | avdmanager create avd \
     -n "${EMULATOR_DEVICE}" \
     -k "system-images;android-33;google_apis_playstore;x86_64" \
     --force
+else
+  echo "AVD ${EMULATOR_DEVICE} already exists, skip creation."
 fi
 
 # mark done
