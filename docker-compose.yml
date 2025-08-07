@@ -33,6 +33,7 @@ services:
       - "5037:5037"   # ADB
       - "5900:5900"   # VNC
       - "6080:6080"   # noVNC (web)
+    shm_size: 2gb     # ← ให้ /dev/shm ใหญ่พอสำหรับ Xorg & emulator
 
     environment:
       # เวลาโซน
