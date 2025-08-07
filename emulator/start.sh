@@ -81,6 +81,7 @@ emulator -avd "${EMULATOR_DEVICE}" \
          -cores "${CORES:-2}" \
          -accel auto \
          -no-window \
+         -no-modem \
          -no-audio \
          -partition-size 512 \
          -verbose &
@@ -91,7 +92,8 @@ sleep 5
 
 # Start x11vnc and noVNC
 echo "[start] Starting x11vnc..."
-x11vnc -forever -noxdamage -shared -rfbauth /root/.vnc/passwd -display :0 -rfbport 5900 &
+x11vnc -listen 0.0.0.0 -forever -noxdamage -shared -rfbauth /root/.vnc/passwd -display :0 -rfbport 5900 &
+# x11vnc -forever -noxdamage -shared -rfbauth /root/.vnc/passwd -display :0 -rfbport 5900 &
 X11VNC_PID=$!
 
 echo "[start] Starting noVNC..."
