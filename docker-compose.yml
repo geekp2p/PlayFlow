@@ -27,6 +27,8 @@ services:
     privileged: true
     devices:
       - /dev/kvm:/dev/kvm
+    cap_add:
+      - NET_ADMIN       
     networks:
       - macvlan88
     ports:
@@ -73,6 +75,9 @@ services:
     depends_on:
       emulator:
         condition: service_healthy
+
+    cap_add:
+      - NET_ADMIN     
     networks:
       - macvlan88
     ports:

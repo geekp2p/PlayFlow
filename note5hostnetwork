@@ -8,3 +8,18 @@ sudo docker network create -d macvlan \
 
 
 sudo docker network create -d macvlan --subnet=192.168.88.0/24 --gateway=192.168.88.1 -o parent=ens33 macvlan88
+
+docker network ls
+
+docker network inspect macvlan88
+
+docker network rm macvlan88
+
+docker network prune
+
+docker network prune -f
+
+docker network rm $(docker network ls -q --filter name=macvlan88)
+
+
+docker network create -d macvlan --subnet=192.168.88.0/24 --gateway=192.168.88.1 -o parent=ens33 macvlan88
