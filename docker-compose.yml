@@ -92,6 +92,7 @@ services:
           {"label":"KSHOP","pkg":"com.kasikornbank.kpaymerchant"},
           {"label":"LINE","pkg":"jp.naver.line.android"}
         ]
+      FORCE_DHCP: "1"  
 
     # ← ย้าย volumes มาระดับเดียวกับ environment/ports
     volumes:
