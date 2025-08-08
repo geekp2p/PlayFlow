@@ -42,6 +42,8 @@ services:
       FORCE_DHCP: "1"
       # ชื่อ AVD ที่จะสร้าง / เรียกใช้
       EMULATOR_DEVICE: emu-33-playstore
+      # ชื่อ instance สำหรับแยก AVD แต่ละ Emulator
+      INSTANCE_NAME: pf_emulator
       # RAM, CPU cores, GPU backend
       MEMORY: "6144"
       CORES: "4"

@@ -73,9 +73,26 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
+# Ensure unique AVD per emulator instance
+INSTANCE_NAME=${INSTANCE_NAME:-${HOSTNAME}}
+BASE_AVD=${EMULATOR_DEVICE:-emu-33-playstore}
+AVD_NAME="${BASE_AVD}-${INSTANCE_NAME}"
+
+if [ ! -d "$ANDROID_AVD_HOME/${AVD_NAME}.avd" ]; then
+  echo "[start] Creating AVD ${AVD_NAME}..."
+  printf "no\n" | avdmanager create avd \
+    -n "${AVD_NAME}" \
+    -k "system-images;android-33;google_apis_playstore;x86_64" \
+    --device "pixel_4" \
+    --force
+fi
+
+# Remove any stale lock files that might prevent startup
+find "$ANDROID_AVD_HOME/${AVD_NAME}.avd" -name '*.lock' -delete || true
+
 # Launch emulator
-echo "[start] Launching Android emulator (${EMULATOR_DEVICE})..."
-emulator -avd "${EMULATOR_DEVICE}" \
+echo "[start] Launching Android emulator (${AVD_NAME})..."
+emulator -avd "${AVD_NAME}" \
          -gpu "${GPU:-guest}" \
          -memory "${MEMORY:-2048}" \
          -cores "${CORES:-2}" \
@@ -133,7 +150,7 @@ NOVNC_PID=$!
     adb pull "/sdcard/Download/$f" "/downloads/Download/$f"
   done
 
-  SNAPSHOT_FLAG="$ANDROID_AVD_HOME/${EMULATOR_DEVICE}.avd/.saved_default_snapshot"
+  SNAPSHOT_FLAG="$ANDROID_AVD_HOME/${AVD_NAME}.avd/.saved_default_snapshot"
   if [ ! -f "$SNAPSHOT_FLAG" ]; then
     echo "[post] Saving snapshot..."
     {
