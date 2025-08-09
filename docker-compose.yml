@@ -37,6 +37,7 @@ services:
       FORCE_DHCP: "1"                     # ✅ เปิด DHCP ใน container
       EMULATOR_DEVICE: emu-33-playstore
       INSTANCE_NAME: pf_emulator
+      DEVICE_SERIAL: emulator-5554
       MEMORY: "12288"
       CORES: "4"
       GPU: "swiftshader_indirect"
@@ -48,7 +49,7 @@ services:
       - avd_data_pf_emulator:/root/.android/avd
 
     healthcheck:
-      test: ["CMD", "sh", "-c", "adb devices | grep -q '^emulator-5554[[:space:]]*device' && adb shell getprop sys.boot_completed | grep -q 1"]
+      test: ["CMD", "sh", "-c", "adb devices | grep -q '^${DEVICE_SERIAL}[[:space:]]*device' && adb shell getprop sys.boot_completed | grep -q 1"]
       start_period: 180s
       interval: 15s
       timeout: 10s
@@ -85,7 +86,7 @@ services:
       - flows:/app/flows
 
     healthcheck:
-      test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -q '^emulator-5554[[:space:]]*device'"]
+      test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -q '^${DEVICE_SERIAL}[[:space:]]*device'"]
       start_period: 180s
       interval: 15s
       timeout: 10s

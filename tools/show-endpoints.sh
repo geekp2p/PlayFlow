@@ -13,19 +13,8 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-CURL_OK=1
-NC_OK=1
-if ! command -v curl >/dev/null 2>&1; then
-  echo "Warning: curl not found. Install with: apt-get install -y curl" >&2
-  CURL_OK=0
-fi
-if ! command -v nc >/dev/null 2>&1; then
-  echo "Warning: nc not found. Install with: apt-get install -y netcat-openbsd" >&2
-  NC_OK=0
-fi
-
 # Colors
-if [ -t 1 ]; then
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   RED='\033[31m'
   GREEN='\033[32m'
   YELLOW='\033[33m'
@@ -66,11 +55,7 @@ ip_of() {
 
 probe_http() {
   local ip=$1 port=$2
-  if [ "$CURL_OK" -eq 0 ]; then
-    echo "UNKNOWN"
-    return 1
-  fi
-  if curl -sSfI "http://$ip:$port" >/dev/null 2>&1; then
+  if docker run --rm --network "$NETWORK" alpine:3.19 sh -c "wget -qO- http://$ip:$port >/dev/null" 2>/dev/null; then
     echo "UP"
   else
     echo "DOWN"
@@ -79,11 +64,7 @@ probe_http() {
 
 probe_tcp() {
   local ip=$1 port=$2
-  if [ "$NC_OK" -eq 0 ]; then
-    echo "UNKNOWN"
-    return 1
-  fi
-  if nc -z -w 1 "$ip" "$port" >/dev/null 2>&1; then
+  if docker run --rm --network "$NETWORK" alpine:3.19 sh -c "nc -z -w 1 $ip $port" 2>/dev/null; then
     echo "UP"
   else
     echo "DOWN"
@@ -92,11 +73,11 @@ probe_tcp() {
 
 colorize() {
   case "$1" in
-    UP) echo "${GREEN}$1${RESET}";;
-    DOWN) echo "${RED}$1${RESET}";;
-    NO\ IP*) echo "${YELLOW}$1${RESET}";;
-    UNKNOWN) echo "${YELLOW}$1${RESET}";;
-    *) echo "$1";;
+    UP) printf '%b' "${GREEN}$1${RESET}";;
+    DOWN) printf '%b' "${RED}$1${RESET}";;
+    NO\ IP*) printf '%b' "${YELLOW}$1${RESET}";;
+    UNKNOWN) printf '%b' "${YELLOW}$1${RESET}";;
+    *) printf '%s' "$1";;
   esac
 }
 

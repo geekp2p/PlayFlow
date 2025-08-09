@@ -18,6 +18,15 @@ export ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-/opt/android-sdk}
 export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$PATH
 TZ_NAME=${TZ:-Asia/Bangkok}
 
+DEVICE_SERIAL=${DEVICE_SERIAL:-emulator-5554}
+
+# Ensure VNC password exists for x11vnc
+if [ ! -f /root/.vnc/passwd ]; then
+  echo "[start] Creating VNC password file..."
+  mkdir -p /root/.vnc
+  x11vnc -storepasswd "${VNC_PASSWORD:-playflow}" /root/.vnc/passwd >/dev/null 2>&1
+fi
+
 # Sync licenses if necessary
 if [ -d /opt/android/licenses ] && [ ! -d "$ANDROID_SDK_ROOT/licenses" ]; then
   echo "[start] Syncing pre-accepted licenses to SDK root"
@@ -63,12 +72,14 @@ while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done
 
 # Start ADB server
 echo "[start] Starting ADB server..."
-adb start-server
+adb kill-server || true
+adb -a -P ${ADB_PORT:-5037} server nodaemon &
+ADB_PID=$!
 
 # Cleanup handler
 cleanup() {
   echo "[start] Shutting down processes..."
-  kill "$EMULATOR_PID" "$X11VNC_PID" "$NOVNC_PID" "$XORG_PID" || true
+  kill "$EMULATOR_PID" "$X11VNC_PID" "$NOVNC_PID" "$XORG_PID" "$ADB_PID" || true
   exit 0
 }
 trap cleanup SIGINT SIGTERM
@@ -97,7 +108,6 @@ emulator -avd "${AVD_NAME}" \
          -memory "${MEMORY:-2048}" \
          -cores "${CORES:-2}" \
          -accel auto \
-         -no-window \
          -no-audio \
          -partition-size 512 \
          -verbose &
@@ -119,7 +129,7 @@ NOVNC_PID=$!
 # Post-boot tasks in background
 (
   echo "[post] Waiting for emulator to appear..."
-  until adb devices | grep -q emulator-5555.*device; do sleep 2; done
+  until adb devices | grep -q "^${DEVICE_SERIAL}[[:space:]]*device"; do sleep 2; done
   echo "[post] Emulator is online"
 
   echo "[post] Waiting for Android boot completion..."
