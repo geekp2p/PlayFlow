@@ -25,3 +25,7 @@ git push -u origin main --force
 git add .
 git commit -m "alot update"
 git push -u origin main
+
+sudo apt install make
+
+make up
