@@ -60,6 +60,9 @@ Section "Screen"
 EndSection
 EOF
 
+# Remove any stale X lock file from previous runs
+rm -f /tmp/.X0-lock || true
+
 # Start Xorg (dummy)
 echo "[start] Launching Xorg..."
 Xorg -noreset +extension GLX +extension RANDR +extension RENDER \

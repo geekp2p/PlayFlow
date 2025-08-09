@@ -22,6 +22,7 @@ services:
       context: ./emulator
       dockerfile: Dockerfile
     container_name: pf_emulator
+    restart: unless-stopped
     privileged: true
     devices: ["/dev/kvm:/dev/kvm"]
     cap_add: ["NET_ADMIN"]

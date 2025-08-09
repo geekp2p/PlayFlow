@@ -8,7 +8,7 @@ USER root
 # ติดตั้งแพ็กเกจที่ต้องใช้ (รวม dhclient ผ่าน isc-dhcp-client)
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       isc-dhcp-client git dos2unix xserver-xorg-core xserver-xorg-video-dummy \
-      libgl1-mesa-dri libgl1-mesa-glx x11vnc websockify netcat-openbsd dnsutils iputils-ping curl \
+      libgl1-mesa-dri libgl1-mesa-glx libxcb-cursor0 x11vnc websockify netcat-openbsd dnsutils iputils-ping curl \
     && rm -rf /var/lib/apt/lists/* \
     && git clone https://github.com/novnc/noVNC.git /opt/noVNC \
     && ln -sf /opt/noVNC/vnc.html /opt/noVNC/index.html \
