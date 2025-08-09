@@ -3,6 +3,8 @@ networks:
     driver: macvlan
     driver_opts:
       parent: ens33
+  backend:
+    driver: bridge
     # If you truly use DHCP from MikroTik, don't add ipam/subnet/gateway here.
     # ipam:
     #   config:
@@ -27,7 +29,8 @@ services:
     devices: ["/dev/kvm:/dev/kvm"]
     cap_add: ["NET_ADMIN"]
     shm_size: 2gb
-    networks: ["macvlan88"]
+    # networks: ["macvlan88"]
+    networks: ["macvlan88", "backend"]
     environment:
       TZ: Asia/Bangkok
       FORCE_DHCP: "1"
@@ -58,7 +61,8 @@ services:
       emulator:
         condition: service_healthy
     cap_add: ["NET_ADMIN"]
-    networks: ["macvlan88"]
+    # networks: ["macvlan88"]
+    networks: ["macvlan88", "backend"]
     environment:
       TZ: Asia/Bangkok
       ADB_SERVER_SOCKET: tcp:pf_emulator:5037
