@@ -17,7 +17,7 @@ networks:
       - "android_sdk_cache:/opt/android-sdk"
 
     healthcheck:
-      test: ["CMD", "sh", "-c", "adb devices | grep -q '^emulator-[0-9]\+[[:space:]]*device' && adb shell getprop sys.boot_completed | grep -q 1"]
+      test: ["CMD", "sh", "-c", "adb devices | grep -q '^$$DEVICE_SERIAL[[:space:]]*device' && adb shell getprop sys.boot_completed | grep -q 1"]
       start_period: 180s
       interval: 15s
       timeout: 10s
