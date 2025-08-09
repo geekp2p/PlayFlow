@@ -1,13 +1,28 @@
 # droidflow/app.py
-from flask import Flask
+from flask import Flask, render_template, request, jsonify
 import threading
+import os
 import runner
+from engine import Engine
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
-@app.route('/')
+# Single Engine instance used by the web UI
+engine = Engine(device_serial=os.environ.get("DEVICE_SERIAL"))
+
+
+@app.route("/")
 def index():
-    return 'DroidFlow service running'
+    """Serve a simple HTML page with basic JS controls."""
+    return render_template("index.html")
+
+
+@app.route("/run", methods=["POST"])
+def run_flow():
+    """Run a flow supplied as JSON payload."""
+    payload = request.get_json(force=True) or {}
+    engine.run_flow(payload)
+    return jsonify({"status": "ok", "received": payload})
 
 def start_runner():
     """Run automation flows in a background thread."""

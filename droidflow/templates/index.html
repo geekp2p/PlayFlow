@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DroidFlow Control</title>
+</head>
+<body>
+<h1>DroidFlow Control Panel</h1>
+<form id="flow-form">
+    <label>Label: <input type="text" id="label" /></label><br>
+    <label>Package: <input type="text" id="pkg" /></label><br>
+    <button type="submit">Run Flow</button>
+</form>
+<pre id="result"></pre>
+<script>
+document.getElementById('flow-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const label = document.getElementById('label').value;
+    const pkg = document.getElementById('pkg').value;
+    const resp = await fetch('/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({label: label, pkg: pkg})
+    });
+    const data = await resp.json();
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+});
+</script>
+</body>
+</html>
