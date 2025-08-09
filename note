@@ -35,3 +35,15 @@ make up
 
 docker exec -it pf_emulator  ip addr show eth0
 docker exec -it pf_droidflow ip addr show eth0
+
+# ขึ้นระบบ + โชว์ปลายทางที่เข้าถึงได้ (noVNC/VNC/ADB/Flask)
+make up
+
+# ดูปลายทางอีกรอบ (สคริปต์ tools/show-endpoints.sh)
+make ps
+
+# ดู log สด ๆ ของทุกคอนเทนเนอร์
+make logs
+
+# ปิดระบบ
+make down
