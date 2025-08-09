@@ -1,13 +1,15 @@
 # Use slim Python image
 FROM python:3.11-slim
 
-# Install adb and Python build deps
+# OS deps: dhclient (ผ่าน isc-dhcp-client), adb, build tools, netcat, curl, bash
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       android-tools-adb \
-      curl \
       build-essential \
       python3-dev \
       isc-dhcp-client \
+      netcat-openbsd \
+      curl \
+      bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -23,6 +25,9 @@ RUN pip install --upgrade pip \
 
 # Copy application code
 COPY . .
+
+# ติดตั้ง entrypoint ไว้ใน PATH และทำให้ executable
+RUN cp docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Make entrypoint script executable
 RUN chmod +x docker-entrypoint.sh

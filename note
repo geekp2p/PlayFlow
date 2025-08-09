@@ -26,6 +26,12 @@ git add .
 git commit -m "alot update"
 git push -u origin main
 
+sudo apt-get install -y curl netcat-openbsd
+
 sudo apt install make
 
 make up
+
+
+docker exec -it pf_emulator  ip addr show eth0
+docker exec -it pf_droidflow ip addr show eth0

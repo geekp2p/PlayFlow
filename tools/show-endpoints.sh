@@ -123,6 +123,6 @@ notes+=("macvlan: host may not reach containers directly; use another LAN device
 if [ ${#notes[@]} -gt 0 ]; then
   printf "Notes:\n"
   for n in "${notes[@]}"; do
-    printf "- %s\n" "$n"
+    printf -- "- %s\n" "$n"
   done
 fi
