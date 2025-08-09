@@ -20,6 +20,8 @@ TZ_NAME=${TZ:-Asia/Bangkok}
 
 DEVICE_SERIAL=${DEVICE_SERIAL:-emulator-5554}
 
+ADB="adb -s ${DEVICE_SERIAL}"
+
 # Ensure VNC password exists for x11vnc
 if [ ! -f /root/.vnc/passwd ]; then
   echo "[start] Creating VNC password file..."
@@ -137,7 +139,7 @@ NOVNC_PID=$!
 
   echo "[post] Waiting for Android boot completion..."
   boot_wait=0
-  until adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do
+  until $ADB shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do
     sleep 5
     boot_wait=$((boot_wait+5))
     if [ $boot_wait -ge 180 ]; then
@@ -147,20 +149,20 @@ NOVNC_PID=$!
   done
 
   echo "[post] Setting timezone & locale..."
-  adb emu geo fix 100.5018 13.7563
-  adb shell setprop persist.sys.timezone "$TZ_NAME" || true
-  adb shell setprop persist.sys.locale "th-TH" || true
+  $ADB emu geo fix 100.5018 13.7563
+  $ADB shell setprop persist.sys.timezone "$TZ_NAME" || true
+  $ADB shell setprop persist.sys.locale "th-TH" || true
 
   echo "[post] Installing any APKs in /apks..."
   for apk in /apks/*.apk; do
     [ -e "$apk" ] || continue
-    adb install -r "$apk" || echo "[post] Failed to install $apk"
+    $ADB install -r "$apk" || echo "[post] Failed to install $apk"
   done
 
   echo "[post] Pulling /sdcard/Download..."
   mkdir -p /downloads/Download
-  for f in $(adb shell ls /sdcard/Download | tr -d '\r'); do
-    adb pull "/sdcard/Download/$f" "/downloads/Download/$f"
+  for f in $($ADB shell ls /sdcard/Download | tr -d '\r'); do
+    $ADB pull "/sdcard/Download/$f" "/downloads/Download/$f"
   done
 
   SNAPSHOT_FLAG="$ANDROID_AVD_HOME/${AVD_NAME}.avd/.saved_default_snapshot"

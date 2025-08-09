@@ -43,7 +43,7 @@ services:
       - android_sdk_cache:/opt/android-sdk
       - avd_data_pf_emulator:/root/.android/avd
     healthcheck:
-      test: ["CMD", "sh", "-c", "adb devices | grep -q '^$$DEVICE_SERIAL[[:space:]]*device' && adb -s $$DEVICE_SERIAL shell getprop sys.boot_completed | grep -q 1"]
+      test: ["CMD", "sh", "-c", "adb devices | grep -q \"^$$DEVICE_SERIAL[[:space:]]*device\" && adb -s $$DEVICE_SERIAL shell getprop sys.boot_completed | grep -q 1"]
       start_period: 180s
       interval: 15s
       timeout: 10s
@@ -75,7 +75,7 @@ services:
       - android-keys:/root/.android
       - flows:/app/flows
     healthcheck:
-      test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -q '^$$DEVICE_SERIAL[[:space:]]*device'"]
+      test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -q \"^$$DEVICE_SERIAL[[:space:]]*device\""]
       start_period: 180s
       interval: 15s
       timeout: 10s
