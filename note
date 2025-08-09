@@ -47,3 +47,14 @@ make logs
 
 # ปิดระบบ
 make down
+
+
+# Restart the adb server inside the emulator container
+docker exec pf_emulator adb kill-server
+docker exec pf_emulator adb start-server
+
+# Verify the emulator is listed as “device” (not “offline”)
+docker exec pf_emulator adb devices
+
+# Check the container health again
+docker inspect -f '{{.State.Health.Status}}' pf_emulator
