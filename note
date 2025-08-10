@@ -58,3 +58,5 @@ docker exec pf_emulator adb devices
 
 # Check the container health again
 docker inspect -f '{{.State.Health.Status}}' pf_emulator
+
+docker compose up -d --force-recreate
