@@ -11,7 +11,8 @@ if ! docker info >/dev/null 2>&1; then
   exit 0
 fi
 
-NETWORK=${NETWORK:-macvlan88}
+# NETWORK=${NETWORK:-macvlan88}
+NETWORK=${NETWORK:-backend}
 
 # Determine if the requested network exists. Docker Compose often prefixes
 # network names with the project name (e.g. playflow_macvlan88). If the user
@@ -45,6 +46,9 @@ if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
 else
   RED=''; GREEN=''; YELLOW=''; RESET=''
 fi
+
+HOST_IP=${HOST_IP:-$(hostname -I 2>/dev/null | awk '{print $1}' | tr -d '\n')}
+[ -z "$HOST_IP" ] && HOST_IP=127.0.0.1
 
 ip_of() {
   local c="$1" ip sel
@@ -122,22 +126,22 @@ if [ -z "$ip" ]; then
   status="NO IP (DHCP?)"
   printf "$format" "$container" "" "noVNC" "6080" "TCP" "Browser" "$(colorize "$status")" "-"
   printf "$format" "$container" "" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "-"
-  printf "$format" "$container" "" "ADB" "5037" "TCP" "LAN/Containers" "$(colorize "$status")" "-"
+  printf "$format" "$container" "" "ADB" "5037" "TCP" "Host" "$(colorize "$status")" "-"
 else
   status=$(probe_http "$ip" 6080)
-  printf "$format" "$container" "$ip" "noVNC" "6080" "TCP" "Browser" "$(colorize "$status")" "http://$ip:6080"
+  printf "$format" "$container" "$ip" "noVNC" "6080" "TCP" "Browser" "$(colorize "$status")" "http://$HOST_IP:6080"
 
   status=$(probe_tcp "$ip" 5900)
   if [ "$status" != "UP" ]; then
     notes+=("Check VNC password at /root/.vnc/passwd")
   fi
-  printf "$format" "$container" "$ip" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "vnc://$ip:5900"
+  printf "$format" "$container" "$ip" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "vnc://$HOST_IP:5900"
 
   status=$(probe_tcp "$ip" 5037)
   if [ "$status" != "UP" ]; then
     notes+=("ADB server may bind to 127.0.0.1; verify ADB_SERVER_SOCKET/start.sh")
   fi
-  printf "$format" "$container" "$ip" "ADB" "5037" "TCP" "LAN/Containers" "$(colorize "$status")" "adb connect $ip:5037"
+   printf "$format" "$container" "$ip" "ADB" "5037" "TCP" "Host" "$(colorize "$status")" "adb connect $HOST_IP:5037"
 fi
 
 # pf_droidflow
@@ -148,7 +152,7 @@ if [ -z "$ip" ]; then
   printf "$format" "$container" "" "Flask UI" "5000" "TCP" "Browser" "$(colorize "$status")" "-"
 else
   status=$(probe_http "$ip" 5000)
-  printf "$format" "$container" "$ip" "Flask UI" "5000" "TCP" "Browser" "$(colorize "$status")" "http://$ip:5000/"
+  printf "$format" "$container" "$ip" "Flask UI" "5000" "TCP" "Browser" "$(colorize "$status")" "http://$HOST_IP:5000/"
 fi
 
 printf -- "--------------------------------------------------------------------------------\n"

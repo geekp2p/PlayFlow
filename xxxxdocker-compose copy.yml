@@ -1,6 +1,16 @@
 networks:
+  macvlan88:
+    external: true
+    # driver: macvlan
+    # driver_opts:
+    #   parent: ens33
   backend:
     driver: bridge
+    # If you truly use DHCP from MikroTik, don't add ipam/subnet/gateway here.
+    # ipam:
+    #   config:
+    #     - subnet: 192.168.88.0/24
+    #       gateway: 192.168.88.1
 
 volumes:
   apks:
@@ -20,13 +30,11 @@ services:
     devices: ["/dev/kvm:/dev/kvm"]
     cap_add: ["NET_ADMIN"]
     shm_size: 2gb
-    networks: ["backend"]
-    ports:
-      - "6080:6080"
-      - "5900:5900"
-      - "5037:5037"
+    # networks: ["macvlan88"]
+    networks: ["macvlan88", "backend"]
     environment:
       TZ: Asia/Bangkok
+      FORCE_DHCP: "1"
       EMULATOR_DEVICE: emu-33-playstore
       INSTANCE_NAME: pf_emulator
       DEVICE_SERIAL: emulator-5554
@@ -54,9 +62,12 @@ services:
       emulator:
         condition: service_healthy
     cap_add: ["NET_ADMIN"]
-    networks: ["backend"]
-    ports:
-      - "5000:5000"
+    networks:
+      - macvlan88
+      - backend 
+    # networks: ["macvlan88"]
+    # networks: ["macvlan88", "backend"]
+    # networks: ["backend"]
     environment:
       TZ: Asia/Bangkok
       ADB_SERVER_SOCKET: tcp:pf_emulator:5037
@@ -67,6 +78,7 @@ services:
           {"label":"KSHOP","pkg":"com.kasikornbank.kpaymerchant"},
           {"label":"LINE","pkg":"jp.naver.line.android"}
         ]
+      FORCE_DHCP: "1"
     volumes:
       - apks:/apks
       - android-keys:/root/.android
