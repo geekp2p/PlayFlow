@@ -3,6 +3,19 @@ set -euo pipefail
 
 NETWORK=${NETWORK:-macvlan88}
 
+# Determine if the requested network exists. Docker Compose often prefixes
+# network names with the project name (e.g. playflow_macvlan88). If the user
+# didn't explicitly set NETWORK, try to auto-detect such a prefixed name.
+network_exists=true
+if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
+  alt=$(docker network ls --format '{{.Name}}' | grep "_${NETWORK}$" | head -n1 || true)
+  if [ -n "$alt" ]; then
+    NETWORK="$alt"
+  else
+    network_exists=false
+  fi
+fi
+
 # Check docker
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker command not found" >&2
@@ -28,8 +41,7 @@ ip_of() {
   local ip
 
   # 1) Docker may already know the IP if the network assigned one.
-  ip=$(docker inspect -f "{{range \$k,\$v := .NetworkSettings.Networks}}{{if eq \$k \"$NETWORK\"}}{{\$v.IPAddress}}{{end}}{{end}}" "$c" 2>/dev/null)
-  if [ -n "$ip" ]; then
+  ip=$(docker inspect -f "{{range \$k,\$v := .NetworkSettings.Networks}}{{if eq \$k \"$NETWORK\"}}{{\$v.IPAddress}}{{end}}{{end}}" "$c" 2>/dev/null || true)
     echo "$ip"
     return 0
   fi
@@ -55,7 +67,7 @@ ip_of() {
 
 probe_http() {
   local ip=$1 port=$2
-  if docker run --rm --network "$NETWORK" alpine:3.19 sh -c "wget -qO- http://$ip:$port >/dev/null" 2>/dev/null; then
+  if [ "$network_exists" = true ] && docker run --rm --network "$NETWORK" alpine:3.19 sh -c "wget -qO- http://$ip:$port >/dev/null" 2>/dev/null; then
     echo "UP"
   else
     echo "DOWN"
@@ -64,7 +76,7 @@ probe_http() {
 
 probe_tcp() {
   local ip=$1 port=$2
-  if docker run --rm --network "$NETWORK" alpine:3.19 sh -c "nc -z -w 1 $ip $port" 2>/dev/null; then
+  if [ "$network_exists" = true ] && docker run --rm --network "$NETWORK" alpine:3.19 sh -c "nc -z -w 1 $ip $port" 2>/dev/null; then
     echo "UP"
   else
     echo "DOWN"
