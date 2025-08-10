@@ -51,7 +51,7 @@ ip_of() {
   # 172.* address which we want to ignore.
   ip=$(timeout 2s docker exec "$c" sh -c "ip -4 addr show dev eth0 2>/dev/null | awk '/inet /{print \$2}' | cut -d/ -f1" 2>/dev/null || true)
   if [ -n "$ip" ]; then
-    ip=$(echo "$ip" | grep -v '^172\.' | head -n1)
+    ip=$(echo "$ip" | grep -v '^172\.' | head -n1 || true)
     if [ -n "$ip" ]; then
       echo "$ip"
       return 0
@@ -61,7 +61,7 @@ ip_of() {
   # 3) fallback (busybox/alpine)
   ip=$(timeout 2s docker exec "$c" sh -c "hostname -I 2>/dev/null" 2>/dev/null || true)
   if [ -n "$ip" ]; then
-    ip=$(echo "$ip" | tr ' ' '\n' | grep -v '^172\.' | head -n1)
+    ip=$(echo "$ip" | tr ' ' '\n' | grep -v '^172\.' | head -n1 || true)
     [ -n "$ip" ] && echo "$ip"
   fi
 }
