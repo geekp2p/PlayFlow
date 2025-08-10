@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Check docker
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker command not found" >&2
+  exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "docker daemon not running or not accessible" >&2
+  exit 1
+fi
+
 NETWORK=${NETWORK:-macvlan88}
 
 # Determine if the requested network exists. Docker Compose often prefixes
@@ -17,14 +27,14 @@ if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
 fi
 
 # Check docker
-if ! command -v docker >/dev/null 2>&1; then
-  echo "docker command not found" >&2
-  exit 1
-fi
-if ! docker info >/dev/null 2>&1; then
-  echo "docker daemon not running or not accessible" >&2
-  exit 1
-fi
+# if ! command -v docker >/dev/null 2>&1; then
+#   echo "docker command not found" >&2
+#   exit 1
+# fi
+# if ! docker info >/dev/null 2>&1; then
+#   echo "docker daemon not running or not accessible" >&2
+#   exit 1
+# fi
 
 # Colors
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
