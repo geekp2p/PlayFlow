@@ -1,8 +1,9 @@
 networks:
   macvlan88:
-    driver: macvlan
-    driver_opts:
-      parent: ens33
+    external: true
+    # driver: macvlan
+    # driver_opts:
+    #   parent: ens33
   backend:
     driver: bridge
     # If you truly use DHCP from MikroTik, don't add ipam/subnet/gateway here.
