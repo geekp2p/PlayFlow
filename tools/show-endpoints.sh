@@ -40,8 +40,9 @@ ip_of() {
   local c="$1"
   local ip
 
-  # 1) Docker may already know the IP if the network assigned one.
+    # 1) Docker may already know the IP if the network assigned one.
   ip=$(docker inspect -f "{{range \$k,\$v := .NetworkSettings.Networks}}{{if eq \$k \"$NETWORK\"}}{{\$v.IPAddress}}{{end}}{{end}}" "$c" 2>/dev/null || true)
+  if [ -n "$ip" ]; then
     echo "$ip"
     return 0
   fi
