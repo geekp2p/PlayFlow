@@ -13,8 +13,16 @@ engine = Engine(device_serial=os.environ.get("DEVICE_SERIAL"))
 
 @app.route("/")
 def index():
-    """Serve a simple HTML page with basic JS controls."""
-    return render_template("index.html")
+    """Render the main DroidFlow UI."""
+    instance_name = os.environ.get("INSTANCE_NAME")
+    app_list: list = []
+    return render_template("index.html", instance_name=instance_name, app_list=app_list)
+
+
+@app.route("/terminal")
+def terminal():
+    """Render a lightweight web terminal page."""
+    return render_template("terminal.html")
 
 
 @app.route("/run", methods=["POST"])
@@ -24,16 +32,18 @@ def run_flow():
     engine.run_flow(payload)
     return jsonify({"status": "ok", "received": payload})
 
+
 def start_runner():
     """Run automation flows in a background thread."""
     try:
         runner.main()
-    except Exception as exc:
+    except Exception:
         # Log exceptions to stderr so Docker logs capture them
         import traceback
         traceback.print_exc()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     thread = threading.Thread(target=start_runner, daemon=True)
     thread.start()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port=5000)

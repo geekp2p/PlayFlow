@@ -1,30 +1,476 @@
++467
+-24
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>DroidFlow Control</title>
+  <meta charset="utf-8">
+  <title>DroidFlow v3</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #fafafa; }
+    .zone { margin: 8px auto; padding: 8px; border: 1px solid #ccc; border-radius: 4px; display: inline-block; }
+    .zone legend { font-weight: bold; padding: 0 4px; }
+    #screen-container { position: relative; display: inline-block; margin-bottom: 16px; }
+    #screen { display: block; max-width: 360px; width: 95%; border: 1px solid #ccc; cursor: crosshair; }
+    /* existing styles */
+    #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .elbox { position: absolute; border: 2px solid lime; box-sizing: border-box; pointer-events: none; }
+    #hoverbox { position: absolute; top: 0; left: 0; border: 2px dashed red; box-sizing: border-box; display: none; pointer-events: none; z-index: 2; }
+    #hover { width: 95%; border: 1px dashed #888; margin: 4px auto; text-align: left; min-height: 40px; padding: 4px; }
+    #hover-info { width: 95%; height: 40px; margin: 4px auto; font-family: monospace; }
+    textarea { width: 95%; height: 80px; margin: 4px; font-family: monospace; }
+    button, select, input { margin: 4px 2px; padding: 4px 8px; }
+    #countdown { position: absolute; left: 10px; top: 20px; padding: 6px 10px; color: white; font-size: 18px; white-space: pre; font-weight: bold; background-color: yellow; border-radius: 4px; z-index: 1000; }
+    #monitor-list { width: 95%; max-width: 360px; margin: 8px auto; display: flex; flex-wrap: wrap; gap: 4px; }
+    #monitor-list button { flex: 1 1 30%; margin: 2px; padding: 4px; }
+
+    /* กรอบแดง dashed รอบ container */
+    .highlight {
+      outline: 2px dashed red;
+      padding: 4px;
+    }
+
+    /* กรอบแดง dashed รอบสอง textarea */
+    .highlight-group {
+      outline: 2px dashed red;
+      padding: 8px;
+      box-sizing: border-box;
+      display: block;
+      width: 95%;
+      max-width: 600px;
+      margin: 4px auto;
+    }
+  </style>
 </head>
 <body>
-<h1>DroidFlow Control Panel</h1>
-<form id="flow-form">
-    <label>Label: <input type="text" id="label" /></label><br>
-    <label>Package: <input type="text" id="pkg" /></label><br>
-    <button type="submit">Run Flow</button>
-</form>
-<pre id="result"></pre>
-<script>
-document.getElementById('flow-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const label = document.getElementById('label').value;
-    const pkg = document.getElementById('pkg').value;
-    const resp = await fetch('/run', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({label: label, pkg: pkg})
+  <h2>DroidFlow v3</h2>
+
+    {% if instance_name %}
+  <div style="margin:4px;font-size:smaller;color:#666;">Instance: {{instance_name}}</div>
+  {% endif %}
+
+  <!-- Zone: Preview -->
+  <fieldset class="zone" id="preview-zone">
+    <legend>Preview</legend>
+    <div id="status"><strong id="fg-app"></strong></div>
+    <div id="screen-container">
+      <img id="screen" src="/stream" alt="device screenshot" />
+      <div id="countdown"></div>
+      <div id="overlay"></div>
+      <div id="hoverbox"></div>
+    </div>
+  </fieldset>
+
+    <!-- Optional: uncomment to enable multi-device select
+  <fieldset class="zone" id="device-zone">
+    <legend>Device</legend>
+    <select id="device-select"></select>
+    <button onclick="refreshDeviceList()">Reload Devices</button>
+  </fieldset>
+  -->
+
+
+  <!-- Zone: Android Controls -->
+  <fieldset class="zone" id="android-zone">
+    <legend>Android Controls</legend>
+    <button onclick="api('/start_record')">Rec</button>
+    <button onclick="api('/stop_record')">Stop</button>
+    <button onclick="api('/clear_actions')">Clear</button>
+    <button onclick="key('home')">Home</button>
+    <button onclick="key('back')">Back</button>
+    <button onclick="key('recent')">Recents</button>
+    <button onclick="key('volume_up')">Vol+</button>
+    <button onclick="key('volume_down')">Vol-</button>
+    <button onclick="key('power')">Power</button>
+    <button onclick="swipe('left')">Swipe◀</button>
+    <button onclick="swipe('right')">Swipe▶</button>
+    <button onclick="swipe('up')">Swipe▲</button>
+    <button onclick="swipe('down')">Swipe▼</button>
+  </fieldset>
+
+  <!-- Zone: App Controls -->
+  <fieldset class="zone" id="app-zone">
+    <legend>App Controls</legend>
+    <select id="app-select">
+      {% for a in app_list %}
+        <option value="{{a.pkg}}">{{a.label}}</option>
+      {% endfor %}
+    </select>
+    <button onclick="openApp()">Open</button>
+    <button onclick="closeApp()">Close</button>
+    <button onclick="restartApp('safe')">Restart (safe)</button>
+    <button onclick="restartApp('fast')">Restart (fast)</button>
+    <button onclick="openApp()">Open K SHOP</button>
+    <button onclick="closeApp()">Close K SHOP</button>
+    <button onclick="restartApp('safe')">Restart K SHOP (safe)</button>
+    <button onclick="restartApp('fast')">Restart K SHOP (fast)</button>
+    <button type="button" onclick="refreshSales()">Refresh รายการขาย</button>
+  </fieldset>
+
+  <!-- Zone: Number Pad -->
+  <fieldset class="zone" id="num-zone">
+    <legend>Number Pad</legend>
+    <div id="num-buttons"></div>
+  </fieldset>
+
+  <!-- Zone: Terminal -->
+  <fieldset class="zone" id="terminal-zone">
+    <legend>Terminal</legend>
+    <button onclick="window.open('/terminal','_blank')">Web Terminal</button>
+  </fieldset>
+
+  <!-- Zone: Flow Editor -->
+  <fieldset class="zone" id="flow-zone" style="width:95%;max-width:600px;">
+    <legend>Flow Editor</legend>
+    <select id="mode">…</select>
+    <button onclick="run()">Run</button>
+    <input id="name" placeholder="file">
+    <button onclick="save()">Save</button>
+    <button onclick="load()">Load</button>
+    <button onclick="compile()">Compile</button>
+    <button onclick="runCompile()">Run Compile</button>
+    <div class="highlight-group">
+      <textarea id="acts" placeholder="Recorded actions…"></textarea>
+      <textarea id="compile-output" placeholder="Compiled actions…"></textarea>
+    </div>
+  </fieldset>
+
+  <!-- Zone: Logs & Monitoring -->
+  <fieldset class="zone" id="log-zone" style="width:95%;max-width:600px;">
+    <legend>Logs & Monitoring</legend>
+    <div id="prog"></div>
+    <textarea id="sched" readonly placeholder="Scheduler log…"></textarea>
+    <h3>Monitor payments:</h3>
+    <div id="monitor-list"></div>
+    <div id="monitor-value" style="margin-top:8px;background:#eee;padding:6px;border-radius:4px;white-space:pre;">
+      No payment selected
+    </div>
+  </fieldset>
+
+  <!-- Zone: Hover Info -->
+  <fieldset class="zone" id="hover-zone" style="width:95%;max-width:600px;">
+    <legend>Hover element info</legend>
+    <div id="hover">Hover inspect…</div>
+    <textarea id="hover-info" readonly placeholder="Hover element info…"></textarea>
+  </fieldset>
+
+  <!-- toast message -->
+  <div id="app-msg" style="
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    display: none;
+    z-index: 2000;
+  "></div>
+
+  <!-- socket.io client -->
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client/dist/socket.io.min.js"></script>
+  <script>
+    // ◼ toast helper
+    function showAppMsg(text, isError = false) {
+      const div = document.getElementById("app-msg");
+      div.innerText = text;
+      div.style.backgroundColor = isError ? "#d9534f" : "#5cb85c";
+      div.style.display = "block";
+      setTimeout(() => div.style.display = "none", 2000);
+    }
+
+    // ◼ generic fetch wrapper
+    function api(url, body = null) {
+      return fetch(url, {
+        method: body ? 'POST' : 'GET',
+        headers: body ? {'Content-Type': 'application/json'} : {},
+        body: body && JSON.stringify(body)
+      });
+    }
+    function key(k)   { api(`/record_key?key=${k}`); }
+    function swipe(d) { api(`/record_swipe?dir=${d}`); }
+    function run()    { api(`/run?mode=${document.getElementById('mode').value}`); }
+
+    // ◼ App Controls
+    function currentPkg() {
+      const sel = document.getElementById('app-select');
+      if (sel && sel.value) return sel.value;
+      return 'com.kasikornbank.kpaymerchant';
+    }
+
+    function openApp() {
+      const pkg = currentPkg()
+      fetch(`/open?pkg=${pkg}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) showAppMsg(`Opened ✓ ${res.msg}`);
+          else        showAppMsg(`Open FAIL ✗ ${res.msg}`, true);
+        })
+        .finally(() => api(`/record_block?kind=open_app&val=${encodeURIComponent(pkg)}`));
+    }
+    function closeApp() {
+      const pkg = currentPkg();;
+      fetch(`/close?pkg=${pkg}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) showAppMsg(`Closed ✓ ${res.msg}`);
+          else        showAppMsg(`Close FAIL ✗ ${res.msg}`, true);
+        })
+        .finally(() => api(`/record_block?kind=close_app&val=${encodeURIComponent(pkg)}`));
+    }
+    function restartApp(mode) {
+      const pkg = currentPkg();;
+      fetch(`/restart?pkg=${pkg}&mode=${mode}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) showAppMsg(`Restart (${mode}) ✓ ${res.msg}`);
+          else        showAppMsg(`Restart (${mode}) FAIL ✗ ${res.msg}`, true);
+        })
+        .catch(err => showAppMsg(`Error: ${err}`, true))
+        .finally(() => api(`/record_block?kind=restart_app&val=${encodeURIComponent(pkg+','+mode)}`));
+    }
+
+    // ◼ pull-to-refresh (designed for K SHOP; safe no-op for others)
+    function refreshSales() {
+      swipe('down');
+      setTimeout(() => swipe('down'), 1000);
+      showAppMsg('Refresh ✓');
+      api('/record_block?kind=refresh&val=double_swipe_down');
+    }
+
+        /*
+    async function refreshDeviceList() {
+      const list = await fetch('/devices').then(r=>r.json()).catch(()=>[]);
+      const sel  = document.getElementById('device-select');
+      if (!sel) return;
+      sel.innerHTML = '';
+      list.forEach(ser => {
+        const opt = document.createElement('option');
+        opt.value = ser; opt.innerText = ser; sel.appendChild(opt);
+      });
+    }
+    function useSerialUrl(url) {
+      const sel = document.getElementById('device-select');
+      if (!sel || !sel.value) return url;
+      const sep = url.includes('?') ? '&' : '?';
+      return `${url}${sep}serial=${encodeURIComponent(sel.value)}`;
+    }
+    */
+
+
+    // ◼ Monitor payments
+    let monitored = null, txs = [];
+    async function loadTransactions() {
+      txs = await fetch('/transactions').then(r => r.json());
+      const list = document.getElementById('monitor-list');
+      list.innerHTML = '';
+      txs.forEach((tx,i) => {
+        const btn = document.createElement('button');
+        btn.innerText = `${tx.name} → ${tx.amount}฿`;
+        btn.onclick = () => {
+          monitored = i; updateMonitoredValue();
+          Array.from(list.children).forEach((b,j) => {
+            b.style.background = j===i? '#007bff' : '';
+            b.style.color      = j===i? 'white'   : '';
+          });
+        };
+        list.appendChild(btn);
+      });
+    }
+    function updateMonitoredValue() {
+      const out = document.getElementById('monitor-value');
+      if (monitored===null) return out.innerText = 'No payment selected';
+      const tx = txs[monitored];
+      out.innerText = `Name: ${tx.name}\nTime: ${tx.time}\nAmount: ${tx.amount} ฿`;
+    }
+
+    // ◼ Countdown display
+    let countdownTimer = null;
+    function updateCountdown(amount, isNew, name) {
+      const el = document.getElementById('countdown');
+      clearInterval(countdownTimer);
+      if (amount!==null && isNew) {
+        let timeLeft = Math.round(amount * 60);
+        el.style.backgroundColor = 'blue';
+        el.innerText = `${name}\n${timeLeft}s`;
+        countdownTimer = setInterval(() => {
+          timeLeft--;
+          el.innerText = `${name}\n${timeLeft}s`;
+          if (timeLeft<=0) {
+            clearInterval(countdownTimer);
+            el.style.backgroundColor = 'red';
+            el.innerText = `${name}\nExpired`;
+          }
+        }, 1000);
+      } else {
+        el.style.backgroundColor = 'yellow';
+        el.innerText = amount!==null ? `${name}\n${amount} ฿` : 'No amount';
+      }
+    }
+
+    // ◼ Program & Scheduler logs
+    const progDiv = document.getElementById('prog');
+    const sched   = document.getElementById('sched');
+    function colorLine(l) {
+      if (/✖/.test(l)) return `<span style="color:red">${l}</span>`;
+      if (/✔/.test(l)) return `<span style="color:green">${l}</span>`;
+      return l;
+    }
+    function progDivInit(logs)   { progDiv.innerHTML = logs.map(colorLine).join('<br>'); }
+    function appendProg(msg)     { progDiv.innerHTML += (progDiv.innerHTML?'<br>':'') + colorLine(msg); }
+    function renderActions(a)    { document.getElementById('acts').value = a.map(JSON.stringify).join('\n'); }
+    function applyPayment(pay)   { updateCountdown(pay.amount,pay.is_new,pay.name); loadTransactions(); }
+
+    // ◼ Hover-inspect
+    let devW=1080, devH=1920;
+    fetch('/screen_size').then(r=>r.json()).then(o=>{
+      if(o.w&&o.h){ devW=o.w; devH=o.h; }
     });
-    const data = await resp.json();
-    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-});
-</script>
+    const img = document.getElementById('screen');
+    let hoverT = null;
+    img.onmousemove = e => {
+      clearTimeout(hoverT);
+      hoverT = setTimeout(()=> {
+        const r = img.getBoundingClientRect();
+        const x = ((e.clientX - r.left)/r.width).toFixed(4);
+        const y = ((e.clientY - r.top)/r.height).toFixed(4);
+        fetch(`/inspect?x=${x}&y=${y}`)
+          .then(r=>r.json()).then(o=>{
+            const ent = Object.entries(o).filter(([_,v])=>v);
+            document.getElementById('hover').innerHTML = ent.map(([k,v])=>`<b>${k}</b>: ${v}`).join('<br>')||'no';
+            document.getElementById('hover-info').value = ent.map(([k,v])=>`${k}: ${v}`).join('\n');
+            const hb = document.getElementById('hoverbox');
+            if (o.bounds) {
+              const [l,t,r2,b] = o.bounds.match(/\d+/g).map(Number);
+              const sx = img.clientWidth/devW;
+              hb.style.cssText = `left:${l*sx}px;top:${t*sx}px;width:${(r2-l)*sx}px;height:${(b-t)*sx}px;display:block`;
+            } else hb.style.display = 'none';
+            api('/record_block?kind=hover&val='+encodeURIComponent(JSON.stringify({
+              rid: o['resource-id'], text: o.text, desc: o['content-desc'], bounds: o.bounds
+            })));
+          });
+      },120);
+    };
+    img.onclick = e => {
+      const r = img.getBoundingClientRect();
+      const x = ((e.clientX - r.left)/r.width).toFixed(4);
+      const y = ((e.clientY - r.top)/r.height).toFixed(4);
+      api(`/record_click?x=${x}&y=${y}`);
+    };
+
+    // ◼ Compile & runCompile
+    let acts = [];
+    function compile() {
+      const out=[];
+      acts.forEach(a=>{
+        if (a.op==='rec') return;
+        if (a.op==='wait'&&a.sec<0.3) return;
+        if (a.op==='click') {
+          const sel={}; ['rid','text','desc'].forEach(k=>a[k]&&(sel[k]=a[k]));
+          out.push({op:'assert', sel, bounds:a.bounds||''});
+        }
+        out.push(a);
+      });
+      document.getElementById('compile-output').value = out.map(JSON.stringify).join('\n');
+    }
+    function runCompile() {
+      const txt = document.getElementById('compile-output').value
+        .split('\n').filter(Boolean).map(JSON.parse);
+      api('/run_compile',{actions:txt,mode:document.getElementById('mode').value});
+    }
+
+    // ◼ Save / Load flow
+    function load() {
+      const name = document.getElementById('name').value;
+      fetch(`/load?name=${name}`)
+        .then(r=>r.json()).then(res=>{
+          if(res.ok) acts=res.actions;
+          document.getElementById('acts').value = acts.map(JSON.stringify).join('\n');
+        });
+    }
+    function save() {
+      api('/save',{name:document.getElementById('name').value,actions:acts});
+    }
+
+    // ◼ Init Number Pad
+    function initNumPad() {
+      fetch('/elements').then(r=>r.json()).then(list=>{
+        const cont=document.getElementById('num-buttons');
+        cont.innerHTML='';
+        list.filter(el=>/:id\/btn[0-9]$/.test(el.rid)).forEach(el=>{
+          const [l,t,r2,b] = el.bounds.match(/\d+/g).map(Number);
+          const nx=((l+r2)/2)/devW, ny=((t+b)/2)/devH;
+          const btn = document.createElement('button');
+          btn.innerText = el.rid.slice(-1);
+          btn.onclick = ()=> api(`/record_click?x=${nx.toFixed(4)}&y=${ny.toFixed(4)}`);
+          cont.appendChild(btn);
+        });
+      });
+    }
+
+    // ◼ Socket.io push
+    const sock = io("/ui");
+    sock.on("state_delta", delta=>{
+      if (delta.prog_init)    progDivInit(delta.prog_init);
+      if (delta.prog_append)  appendProg(delta.prog_append);
+      if (delta.sched_init)   sched.value = delta.sched_init.join("\n");
+      if (delta.actions)      renderActions(delta.actions);
+      if (delta.payment)      applyPayment(delta.payment);
+    });
+    // ★ on reconnect → รีเซ็ต stream
+    sock.on('connect', ()=>{
+      console.log('Socket reconnected – restarting stream');
+      img.src = '/stream?' + Date.now();
+    });
+
+    // ★ on image error → retry
+    img.onerror = ()=>{
+      console.warn('Stream error – retrying in 1s');
+      setTimeout(()=> img.src = '/stream?' + Date.now(), 1000);
+    };
+
+    // ◼ Auto-refresh zones
+    setInterval(()=>{
+      loadTransactions();
+      initNumPad();
+    },2000);
+
+    // ◼ First load
+    window.onload = ()=>{
+      img.src="/stream";
+      initNumPad();
+      loadTransactions();
+    };
+
+    // ◼ Show FG app
+    setInterval(async ()=>{
+      const info = await fetch('/current_app').then(r=>r.json());
+      document.getElementById('fg-app').textContent =
+        info.package ? `FG: ${info.package}` : 'FG: ?';
+    },1500);
+
+    // ◼ Bandwidth meter
+    window.addEventListener('load', ()=>{
+      const overlay = document.getElementById('countdown');
+      let bytes = 0, t0 = performance.now();
+      fetch('/stream').then(res=>{
+        const reader = res.body.getReader();
+        function pump(){
+          reader.read().then(({done,value})=>{
+            if(done) return;
+            bytes += value.byteLength;
+            const now = performance.now();
+            if(now - t0 >= 1000){
+              overlay.innerText = (bytes/1024).toFixed(1)+' KB/s';
+              bytes = 0; t0 = now;
+            }
+            pump();
+          });
+        }
+        pump();
+      }).catch(console.error);
+    });
+  </script>
+
 </body>
 </html>
