@@ -4,14 +4,20 @@ set -euo pipefail
 # AVD directory
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-/root/.android/avd}
 
-# ---- DHCP on eth0 if requested ----
+# ---- DHCP on detected interface if requested ----
 if [ "${FORCE_DHCP:-0}" = "1" ]; then
-  echo "[start] Releasing any existing DHCP lease..."
-  dhclient -r eth0 || true
-  echo "[start] Requesting DHCP on eth0..."
+  IFACE="${DHCP_IFACE:-}"
+  if [ -z "$IFACE" ]; then
+    IFACE=$(ip -4 -o addr show up scope global \
+      | awk '/inet /{print $2 " " $4}' \
+      | grep -E ' 192\.168\.88\.' \
+      | awk '{print $1}' | head -n1)
+    [ -z "$IFACE" ] && IFACE="eth0"
+  fi
+  echo "[start] DHCP on $IFACE ..."
+  dhclient -r "$IFACE" || true
   attempt=0
-  # Try up to 5 times to obtain a lease before giving up
-  until dhclient -v -1 eth0; do
+  until dhclient -v -1 "$IFACE"; do
     attempt=$((attempt+1))
     if [ "$attempt" -ge 5 ]; then
       echo "[start] dhclient failed after $attempt attempts"

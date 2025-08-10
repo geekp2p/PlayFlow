@@ -63,7 +63,8 @@ services:
         condition: service_healthy
     cap_add: ["NET_ADMIN"]
     # networks: ["macvlan88"]
-    networks: ["macvlan88", "backend"]
+    # networks: ["macvlan88", "backend"]
+    networks: ["backend"]
     environment:
       TZ: Asia/Bangkok
       ADB_SERVER_SOCKET: tcp:pf_emulator:5037
@@ -74,7 +75,7 @@ services:
           {"label":"KSHOP","pkg":"com.kasikornbank.kpaymerchant"},
           {"label":"LINE","pkg":"jp.naver.line.android"}
         ]
-      FORCE_DHCP: "1"
+      # FORCE_DHCP: "1"
     volumes:
       - apks:/apks
       - android-keys:/root/.android

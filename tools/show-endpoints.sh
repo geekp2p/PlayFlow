@@ -47,25 +47,27 @@ else
 fi
 
 ip_of() {
-  local c="$1"
-  local ip
-
-    # 1) Docker may already know the IP if the network assigned one.
+  local c="$1" ip sel
   ip=$(docker inspect -f "{{range \$k,\$v := .NetworkSettings.Networks}}{{if eq \$k \"$NETWORK\"}}{{\$v.IPAddress}}{{end}}{{end}}" "$c" 2>/dev/null || true)
   if [ -n "$ip" ]; then
     echo "$ip"
     return 0
   fi
 
-  # 2) macvlan + DHCP: check inside container. Some setups return an extra
-  # 172.* address which we want to ignore.
-  ip=$(timeout 2s docker exec "$c" sh -c "ip -4 addr show dev eth0 2>/dev/null | awk '/inet /{print \$2}' | cut -d/ -f1" 2>/dev/null || true)
+  ip=$(timeout 2s docker exec "$c" sh -c "ip -4 -o addr show up scope global | awk '{print \$4}' | cut -d/ -f1" 2>/dev/null || true)
   if [ -n "$ip" ]; then
-    ip=$(echo "$ip" | grep -v '^172\.' | head -n1 || true)
-    if [ -n "$ip" ]; then
-      echo "$ip"
+    sel=$(echo "$ip" | grep -E '^192\.168\.88\.' | head -n1)
+    if [ -n "$sel" ]; then
+      echo "$sel"
       return 0
     fi
+    sel=$(echo "$ip" | grep -v '^172\.' | head -n1)
+    if [ -n "$sel" ]; then
+      echo "$sel"
+      return 0
+    fi
+    echo "$ip" | head -n1
+    return 0
   fi
 
   # 3) fallback (busybox/alpine)
@@ -127,13 +129,13 @@ else
 
   status=$(probe_tcp "$ip" 5900)
   if [ "$status" != "UP" ]; then
-    notes+=("เช็ค VNC password ไฟล์ /root/.vnc/passwd")
+    notes+=("Check VNC password at /root/.vnc/passwd")
   fi
   printf "$format" "$container" "$ip" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "vnc://$ip:5900"
 
   status=$(probe_tcp "$ip" 5037)
   if [ "$status" != "UP" ]; then
-    notes+=("ADB server อาจ bind แค่ 127.0.0.1; ตรวจ ADB_SERVER_SOCKET=tcp:5037 ใน start.sh")
+    notes+=("ADB server may bind to 127.0.0.1; verify ADB_SERVER_SOCKET/start.sh")
   fi
   printf "$format" "$container" "$ip" "ADB" "5037" "TCP" "LAN/Containers" "$(colorize "$status")" "adb connect $ip:5037"
 fi
