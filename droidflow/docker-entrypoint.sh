@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ขอ IP จาก DHCP (macvlan ใช้ eth0 ในคอนเทนเนอร์)
+# Request a LAN IP via DHCP on macvlan interface (eth0)
 if [ "${FORCE_DHCP:-0}" = "1" ]; then
   echo "[start] Releasing any existing DHCP lease..."
   dhclient -r eth0 || true
@@ -18,10 +18,10 @@ if [ "${FORCE_DHCP:-0}" = "1" ]; then
   done
 fi
 
-# ถ้ามีอาร์กิวเมนต์ -> รันคำสั่งนั้นแทน
+# If arguments are provided, run them instead of the default
 if [ "$#" -gt 0 ]; then
   exec "$@"
 fi
 
-# ค่าเริ่มต้น: รันแอป Flask
+# Default: launch the Flask app
 exec python3 /app/app.py

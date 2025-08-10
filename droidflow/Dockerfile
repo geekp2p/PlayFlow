@@ -7,6 +7,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       build-essential \
       python3-dev \
       isc-dhcp-client \
+      iproute2 \
       netcat-openbsd \
       curl \
       bash \
