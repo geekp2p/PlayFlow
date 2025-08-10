@@ -11,3 +11,6 @@ docker network create -d macvlan \
 docker exec pf_emulator ip -4 addr show dev eth0
 docker exec pf_droidflow ip -4 addr show dev eth0
 docker logs pf_emulator | grep -i dhcp -A2 -B2
+
+
+ docker network create -d macvlan --subnet=192.168.88.0/24 --gateway=192.168.88.1 -o parent=ens33 macvlan88
