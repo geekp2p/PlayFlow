@@ -5,3 +5,4 @@ uiautomator2
 eventlet
 websockets
 av==10.0.0
+pillow
