@@ -35,5 +35,12 @@ Replace `<host-ip>` with the IP address of the machine running PlayFlow.
 ## Troubleshooting
 
 * Ensure `curl` and `nc` (`netcat-openbsd`) are installed; the script warns if missing.
-* If ADB is DOWN, set `ADB_SERVER_SOCKET=tcp:5037` before starting the server.
+* If ADB is DOWN or you see `ECONNREFUSED` errors, ensure the emulator's ADB
+  server is reachable. Set `ADB_SERVER_SOCKET=tcp:5037` and confirm
+  `ANDROID_ADB_SERVER_HOST` and `ANDROID_ADB_SERVER_PORT` point to the
+  emulator (the provided docker-compose already sets these).
 * For VNC issues, verify the password file `/root/.vnc/passwd`.
+* For high-performance video streaming, install `scrcpy` or set
+  `SCRCPY_SERVER_JAR` to the path of `scrcpy-server.jar`. On Ubuntu the file is
+  typically located under `/usr/local/share/scrcpy/scrcpy-server.jar` or
+  `/usr/share/scrcpy/scrcpy-server.jar`.
