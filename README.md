@@ -17,6 +17,16 @@ make up
 
 The command builds/starts the stack and prints an endpoint table for each container. Run `make ps` at any time to show the endpoints again. Use `make down` to stop the containers.
 
+### Using ADB inside the container
+
+To interact with a connected Android device directly from the `pf_droidflow` container and reverse port `5000` for the web UI, run:
+
+```bash
+./start_host.sh
+```
+
+The script stops any host-side ADB server, starts the Docker stack, launches an ADB server inside `pf_droidflow`, and performs `adb reverse tcp:5000 tcp:5000` so apps on the device can reach the web UI at `http://127.0.0.1:5000`.
+
 ## Services & Ports
 
 | Container    | Service  | Port | Proto | Access                        |
