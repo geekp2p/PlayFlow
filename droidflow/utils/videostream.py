@@ -35,9 +35,9 @@ SCRCPY_VER    = os.getenv("SCRCPY_SERVER_VER", "1.25")   # เวอร์ชั
 # เส้นทางที่ “น่าจะ” มี scrcpy-server.jar ในเครื่อง host
 _LOCAL_CANDIDATES = [
     os.getenv("SCRCPY_SERVER_JAR", ""),                       # ระบุผ่าน env ได้
-    r"C:\\Program Files\\Scrcpy\\scrcpy-server.jar",             # Windows (choco)
-    "/usr/local/share/scrcpy/scrcpy-server.jar",              # macOS / Linux
-    "/usr/share/scrcpy/scrcpy-server.jar",
+    "/usr/local/share/scrcpy/scrcpy-server.jar",              # ติดตั้งจาก source / macOS
+    "/usr/share/scrcpy/scrcpy-server.jar",                    # apt (Debian/Ubuntu)
+    "/snap/scrcpy/current/usr/share/scrcpy/scrcpy-server.jar",# snap (Ubuntu)
 ]
 
 # ชื่อไฟล์บนอุปกรณ์
