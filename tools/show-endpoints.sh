@@ -157,6 +157,7 @@ fi
 
 printf -- "--------------------------------------------------------------------------------\n"
 notes+=("macvlan: host may not reach containers directly; use another LAN device.")
+notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' for direct commands")
 if [ ${#notes[@]} -gt 0 ]; then
   printf "Notes:\n"
   for n in "${notes[@]}"; do
