@@ -23,5 +23,19 @@ if [ "$#" -gt 0 ]; then
   exec "$@"
 fi
 
+# Attempt to connect local adb server to the emulator
+if [ -n "${INSTANCE_NAME:-}" ]; then
+  echo "[start] Connecting adb to ${INSTANCE_NAME}:5555..."
+  attempt=0
+  until adb connect "${INSTANCE_NAME}:5555" >/dev/null 2>&1; do
+    attempt=$((attempt+1))
+    if [ "$attempt" -ge 5 ]; then
+      echo "[start] adb connect failed after $attempt attempts"
+      break
+    fi
+    sleep 2
+  done
+fi
+
 # Default: launch the Flask app
 exec python3 /app/app.py

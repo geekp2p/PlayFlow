@@ -11,6 +11,19 @@ PlayFlow provides a Dockerized Android 33 emulator with a simple web UI for cont
 
 ## Quick Start
 
+# PlayFlow
+Dockerized Android emulator & Web UI for RPA/testing flows | สแต็ก Docker Android emulator และเว็บ UI สำหรับ RPA/Testing flows
+
+PlayFlow provides a Dockerized Android 33 emulator with a simple web UI for controlling applications. The stack uses a standard Docker bridge network and exposes ports on the host so the emulator and web UI can be accessed directly from the host or other machines.
+
+## Features
+
+* Android 33 Google Play emulator
+* Host-accessible services via port mapping
+* Basic Flask/Socket.IO web UI exposing `adb` operations
+
+## Quick Start
+
 ```bash
 make up
 ```
