@@ -59,7 +59,7 @@ services:
       - "5000:5000"
     environment:
       TZ: Asia/Bangkok
-      ADB_SERVER_SOCKET: tcp:pf_emulator:5037
+      # ADB_SERVER_SOCKET: tcp:pf_emulator:5037
       DEVICE_SERIAL: emulator-5554
       # ADB_SERVER_SOCKET: tcp:pf_emulator:5037
       # ANDROID_ADB_SERVER_HOST: pf_emulator
@@ -79,7 +79,8 @@ services:
       # test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -q \"^$$DEVICE_SERIAL[[:space:]]*device\""]
       # test: ["CMD", "sh", "-c", "adb devices | grep -q \"^$$DEVICE_SERIAL[[:space:]]*device\""]
       # test: ["CMD","sh","-lc","adb connect pf_emulator:5555 >/dev/null 2>&1 || true; adb devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
-      test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
+      # test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
+      test: ["CMD","sh","-lc","adb connect pf_emulator:5555 >/dev/null 2>&1 || true; adb devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
       start_period: 180s
       interval: 15s
       timeout: 10s
