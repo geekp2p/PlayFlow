@@ -75,12 +75,22 @@ def _pick_first_device_from_adb(host: str | None = None, port: str | None = None
         out = subprocess.check_output(cmd, text=True, timeout=3, errors="ignore")
     except Exception:
         return None
+
+    for line in out.splitlines()[1:]:
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match(r"^(\S+)\s+device$", line)
+        if m:
+            return m.group(1)
+    return None
     
 def ensure_device_online() -> None:
     """Ensure the configured device is connected via adb."""
     ser = _current_device_serial()
     if not ser:
         return
+    out = ""
     try:
         out = subprocess.check_output(
             _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
@@ -88,7 +98,7 @@ def ensure_device_online() -> None:
         if re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
             return
     except Exception:
-        pass
+        out = ""
     host = INSTANCE_NAME
     if host:
         subprocess.run(
@@ -97,7 +107,15 @@ def ensure_device_online() -> None:
             stderr=subprocess.DEVNULL,
             check=False,
         )
-
+        time.sleep(1)
+        try:
+            out = subprocess.check_output(
+                _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
+            )
+            if re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+                return
+        except Exception:
+            out = ""
 
     for line in out.splitlines()[1:]:
         line = line.strip()
