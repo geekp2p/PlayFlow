@@ -293,8 +293,16 @@ def current_app() -> dict:
 
 # ───────────── payment helper ─────────────
 def read_payment_info() -> dict:
-    """Extract payment info from current UI hierarchy."""
-    xml = connect().dump_hierarchy(compressed=False, pretty=True)
+    """Extract payment info from current UI hierarchy.
+
+    Falls back to empty values when a device is unavailable.
+    """
+    try:
+        xml = connect().dump_hierarchy(compressed=False, pretty=True)
+    except Exception as e:  # device might be offline
+        log(f"read_payment_info fail {e}")
+        return {'amount': None, 'is_new': False, 'name': ''}
+    
     root = ET.fromstring(xml)
     parent_map = {c: p for p in root.iter('node') for c in p}
     for n in root.iter('node'):
