@@ -18,15 +18,13 @@ until adb connect pf_emulator:5555 >/dev/null 2>&1; do
   sleep 2
 done
 
-# Auto-select device serial if not provided
-if [ -z "${DEVICE_SERIAL:-}" ]; then
-  ser="$(adb devices | awk '/device$/ {print $1; exit}')"
-  if [ -n "$ser" ]; then
-    export DEVICE_SERIAL="$ser"
-    echo "[entry] Using DEVICE_SERIAL=$DEVICE_SERIAL"
-  else
-    echo "[entry] WARN: no device found from 'adb devices'"
-  fi
+# Determine and export the connected device serial
+ser="$(adb devices | awk '/device$/ {print $1; exit}')"
+if [ -n "$ser" ]; then
+  export DEVICE_SERIAL="$ser"
+  echo "[entry] Using DEVICE_SERIAL=$DEVICE_SERIAL"
+else
+  echo "[entry] WARN: no device found from 'adb devices'"
 fi
 
 # Request a LAN IP via DHCP on macvlan interface (eth0)

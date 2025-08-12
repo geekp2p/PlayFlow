@@ -62,7 +62,7 @@ services:
       # ADB_SERVER_SOCKET: tcp:pf_emulator:5037
       # ANDROID_ADB_SERVER_HOST: pf_emulator
       # ANDROID_ADB_SERVER_PORT: "5037"
-      DEVICE_SERIAL: emulator-5554
+      # DEVICE_SERIAL: emulator-5554
       INSTANCE_NAME: pf_emulator
       DROIDFLOW_APPS: >-
         [

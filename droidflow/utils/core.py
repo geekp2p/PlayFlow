@@ -85,8 +85,8 @@ def _pick_first_device_from_adb(host: str | None = None, port: str | None = None
             return m.group(1)
     return None
     
-def ensure_device_online() -> None:
-    """Ensure the configured device is connected via adb."""
+def ensure_device_online() -> str | None:
+    """Ensure there is a connected device; update DEVICE_SERIAL if found."""
     ser = _current_device_serial()
     if not ser:
         return
@@ -95,8 +95,8 @@ def ensure_device_online() -> None:
         out = subprocess.check_output(
             _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
         )
-        if re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
-            return
+        if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+            return ser
     except Exception:
         out = ""
     host = INSTANCE_NAME
@@ -112,8 +112,8 @@ def ensure_device_online() -> None:
             out = subprocess.check_output(
                 _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
             )
-            if re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
-                return
+            if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+                return ser
         except Exception:
             out = ""
 
@@ -123,14 +123,15 @@ def ensure_device_online() -> None:
             continue
         m = re.match(r"^(\S+)\s+device$", line)
         if m:
-            return m.group(1)
+            new_ser = m.group(1)
+            os.environ["DEVICE_SERIAL"] = new_ser
+            return new_ser
     return None
 
 def connect(serial: str | None = None):
-    """
-    คืน uiautomator2.Device ตาม priority (ดูหัวไฟล์).
-    """
-    ensure_device_online()
+    """Return uiautomator2.Device following the priority rules."""
+    ser_env = ensure_device_online()
+
     # 1) honor ADB_SERVER_SOCKET
     adb_sock = os.getenv("ADB_SERVER_SOCKET")
     if adb_sock and adb_sock.startswith("tcp:"):
@@ -138,10 +139,12 @@ def connect(serial: str | None = None):
         if ":" in hostport:
             host, port = hostport.split(":", 1)
         else:
-            host, port = hostport, "5037"
+            host, port = None, hostport
         pick = _pick_first_device_from_adb(host, port)
-        if pick:
-            serial = pick if serial is None else serial  # argument overrides; เรายังไม่ทับถ้ามี arg
+        if pick and serial is None:
+            serial = pick
+    if serial is None and ser_env:
+        serial = ser_env            
     # 2) request param (เฉพาะเมื่อไม่มี arg)
     if serial is None and has_request_context():
         reqser = request.args.get("serial")

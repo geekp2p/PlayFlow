@@ -2,6 +2,7 @@ flask
 flask-socketio
 apscheduler
 uiautomator2
+adbutils
 eventlet
 websockets
 av==10.0.0
