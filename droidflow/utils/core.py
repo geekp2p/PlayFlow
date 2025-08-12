@@ -40,6 +40,20 @@ def _adb_cmd(extra: list[str]) -> list[str]:
     Return adb command list honoring DEVICE_SERIAL (live) และ ADB_PATH.
     """
     base = [ADB_PATH]
+
+    # honor ADB_SERVER_SOCKET for remote servers, e.g. tcp:host:port
+    adb_sock = os.getenv("ADB_SERVER_SOCKET")
+    if adb_sock and adb_sock.startswith("tcp:"):
+        hostport = adb_sock[4:]
+        if ":" in hostport:
+            host, port = hostport.split(":", 1)
+        else:
+            host, port = None, hostport
+        if host:
+            base += ["-H", host]
+        if port:
+            base += ["-P", port]
+
     ser = _current_device_serial()
     if ser:
         base += ["-s", ser]

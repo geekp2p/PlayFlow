@@ -9,6 +9,19 @@ PlayFlow provides a Dockerized Android 33 emulator with a simple web UI for cont
 * Host-accessible services via port mapping
 * Basic Flask/Socket.IO web UI exposing `adb` operations
 
+## Host Setup (Ubuntu)
+
+On a fresh Ubuntu host run the helper script once to install Docker, the
+Compose plugin and utilities such as `scrcpy`:
+
+```bash
+./setup_host.sh
+```
+
+The script installs required packages and ensures the `scrcpy-server.jar`
+file is available. Host-side ADB is **not** needed; all ADB commands run
+inside the containers.
+
 ## Quick Start
 
 ```bash
