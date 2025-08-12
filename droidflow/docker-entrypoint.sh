@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Use the ADB server running inside the emulator container
+# Use the ADB server running inside the emulator container.
+# Export variables understood by both the adb CLI and the Python adbutils
+# library.  If the user provides ADB_SERVER_SOCKET, derive host/port from it;
+# otherwise fall back to the default emulator container location.
 export ADB_SERVER_SOCKET="${ADB_SERVER_SOCKET:-tcp:pf_emulator:5037}"
-export ANDROID_ADB_SERVER_HOST="${ANDROID_ADB_SERVER_HOST:-pf_emulator}"
-export ANDROID_ADB_SERVER_PORT="${ANDROID_ADB_SERVER_PORT:-5037}"
+if [[ "$ADB_SERVER_SOCKET" == tcp:* ]]; then
+  hostport="${ADB_SERVER_SOCKET#tcp:}"
+  export ADB_SERVER_HOST="${ADB_SERVER_HOST:-${hostport%%:*}}"
+  export ADB_SERVER_PORT="${ADB_SERVER_PORT:-${hostport##*:}}"
+  export ANDROID_ADB_SERVER_HOST="${ANDROID_ADB_SERVER_HOST:-$ADB_SERVER_HOST}"
+  export ANDROID_ADB_SERVER_PORT="${ANDROID_ADB_SERVER_PORT:-$ADB_SERVER_PORT}"
+fi
 
 # Prefer the platform-tools adb bundled in the image
 export PATH="/opt/android-sdk/platform-tools:${PATH}"

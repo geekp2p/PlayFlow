@@ -17,6 +17,20 @@ Strategy การเลือก device:
 """
 
 import os
+
+# Derive host/port env vars from ADB_SERVER_SOCKET before importing libraries
+_adb_sock = os.getenv("ADB_SERVER_SOCKET")
+if _adb_sock and _adb_sock.startswith("tcp:"):
+    _hostport = _adb_sock[4:]
+    if ":" in _hostport:
+        _host, _port = _hostport.split(":", 1)
+    else:
+        _host, _port = _hostport, "5037"
+    os.environ.setdefault("ADB_SERVER_HOST", _host)
+    os.environ.setdefault("ADB_SERVER_PORT", _port)
+    os.environ.setdefault("ANDROID_ADB_SERVER_HOST", _host)
+    os.environ.setdefault("ANDROID_ADB_SERVER_PORT", _port)
+
 import json
 import re
 import time
