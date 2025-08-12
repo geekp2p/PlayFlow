@@ -23,7 +23,7 @@ from io import BytesIO
 import av
 
 from .screenshot import ScreenshotStreamer
-from .core import log as _log
+from .core import log as _log, ensure_device_online
 
 # ───────────── config ─────────────
 DEVICE_SERIAL = os.getenv("DEVICE_SERIAL")
@@ -58,6 +58,7 @@ class VideoStreamer:
 
     # ───────────── adb helper ─────────────
     def _adb(self, *args: str) -> list[str]:
+        ensure_device_online()
         cmd = [ADB_PATH]
         if DEVICE_SERIAL:
             cmd += ["-s", DEVICE_SERIAL]

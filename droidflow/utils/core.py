@@ -29,6 +29,8 @@ from flask import has_request_context, request
 # ───────────── config ─────────────
 DEVICE_SERIAL_DEFAULT = os.getenv("DEVICE_SERIAL")  # อ่านครั้งแรก; อาจมีการ export ภายหลัง
 ADB_PATH = os.getenv("ADB_PATH", "adb")
+INSTANCE_NAME = os.getenv("INSTANCE_NAME")
+ADB_CONNECT_PORT = os.getenv("ADB_CONNECT_PORT", "5555")
 
 # ───────────── runtime env helpers ─────────────
 def _current_device_serial() -> str | None:
@@ -73,6 +75,30 @@ def _pick_first_device_from_adb(host: str | None = None, port: str | None = None
         out = subprocess.check_output(cmd, text=True, timeout=3, errors="ignore")
     except Exception:
         return None
+    
+def ensure_device_online() -> None:
+    """Ensure the configured device is connected via adb."""
+    ser = _current_device_serial()
+    if not ser:
+        return
+    try:
+        out = subprocess.check_output(
+            _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
+        )
+        if re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+            return
+    except Exception:
+        pass
+    host = INSTANCE_NAME
+    if host:
+        subprocess.run(
+            [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+
+
     for line in out.splitlines()[1:]:
         line = line.strip()
         if not line:
@@ -86,6 +112,7 @@ def connect(serial: str | None = None):
     """
     คืน uiautomator2.Device ตาม priority (ดูหัวไฟล์).
     """
+    ensure_device_online()
     # 1) honor ADB_SERVER_SOCKET
     adb_sock = os.getenv("ADB_SERVER_SOCKET")
     if adb_sock and adb_sock.startswith("tcp:"):
@@ -157,6 +184,7 @@ def inside(a: list[int], b: list[int]) -> bool:
 
 def _adb(cmd: list[str]):
     """Run adb command without raising on failure."""
+    ensure_device_online()
     subprocess.run(_adb_cmd(cmd), check=False)
 
 # ──────────── foreground helper ────────────
