@@ -9,6 +9,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       isc-dhcp-client \
       iproute2 \
       netcat-openbsd \
+      curl \
       unzip \
       bash \
     && rm -rf /var/lib/apt/lists/* \
