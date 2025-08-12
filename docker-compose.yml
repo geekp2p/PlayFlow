@@ -80,6 +80,7 @@ services:
       # test: ["CMD", "sh", "-c", "adb devices | grep -q \"^$$DEVICE_SERIAL[[:space:]]*device\""]
       # test: ["CMD","sh","-lc","adb connect pf_emulator:5555 >/dev/null 2>&1 || true; adb devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
       # test: ["CMD", "sh", "-c", "adb -H pf_emulator -P 5037 devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
+      # test: ["CMD","sh","-lc","adb connect pf_emulator:5555 >/dev/null 2>&1 || true; adb devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
       test: ["CMD","sh","-lc","adb connect pf_emulator:5555 >/dev/null 2>&1 || true; adb devices | grep -Eq '^emulator-[0-9]+[[:space:]]+device$'"]
       start_period: 180s
       interval: 15s

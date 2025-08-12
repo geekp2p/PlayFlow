@@ -100,8 +100,14 @@ def _pick_first_device_from_adb(host: str | None = None, port: str | None = None
             return m.group(1)
     return None
     
-def ensure_device_online() -> str | None:
-    """Ensure there is a connected device; update DEVICE_SERIAL if found."""
+def ensure_device_online(timeout: int = 30, interval: float = 1.0) -> str | None:
+    """Ensure there is a connected device; update DEVICE_SERIAL if found.
+
+    This polls ``adb devices`` (optionally running ``adb connect`` each loop) until
+    a device in the ``device`` state is discovered or the timeout expires.
+    Returns the device serial if found, otherwise ``None``.
+    """
+
     ser = _current_device_serial()
     # if not ser:
     #     return
@@ -116,19 +122,30 @@ def ensure_device_online() -> str | None:
     #     out = ""
     host = INSTANCE_NAME
     adb_sock = os.getenv("ADB_SERVER_SOCKET")
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        if host and not adb_sock:
+            subprocess.run(
+                [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+
     # if host and not adb_sock:
     
     # Always attempt to connect to the emulator if a host is provided and we're
     # using the local ADB server. This supports containerized setups where the
     # device isn't pre-attached.
-    if host and not adb_sock:    
-        subprocess.run(
-            [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-        time.sleep(1)
+    # if host and not adb_sock:    
+    #     subprocess.run(
+    #         [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
+    #         stdout=subprocess.DEVNULL,
+    #         stderr=subprocess.DEVNULL,
+    #         check=False,
+    #     )
+    #     time.sleep(1)
         # try:
         #     out = subprocess.check_output(
         #         _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
@@ -139,13 +156,25 @@ def ensure_device_online() -> str | None:
         #     out = ""
         try:
             out = subprocess.check_output(
-                _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
+                _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore",
             )
         except Exception:
-            return None
+            out = ""
 
-    if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
-        return ser
+        if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+            return ser
+
+        # for line in out.splitlines()[1:]:
+        #     line = line.strip()
+        #     if not line:
+        #         continue
+        #     m = re.match(r"^(\S+)\s+device$", line)
+        #     if m:
+        #         new_ser = m.group(1)
+        #         os.environ["DEVICE_SERIAL"] = new_ser
+        #         return new_ser
+
+        time.sleep(interval)
 
     for line in out.splitlines()[1:]:
         line = line.strip()
