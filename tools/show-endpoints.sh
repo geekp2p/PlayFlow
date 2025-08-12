@@ -126,7 +126,7 @@ if [ -z "$ip" ]; then
   status="NO IP (DHCP?)"
   printf "$format" "$container" "" "noVNC" "6080" "TCP" "Browser" "$(colorize "$status")" "-"
   printf "$format" "$container" "" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "-"
-  printf "$format" "$container" "" "ADB" "5037" "TCP" "Host" "$(colorize "$status")" "-"
+  printf "$format" "$container" "" "ADB" "-" "TCP" "Internal" "$(colorize "$status")" "docker exec pf_droidflow adb devices"
 else
   status=$(probe_http "$ip" 6080)
   printf "$format" "$container" "$ip" "noVNC" "6080" "TCP" "Browser" "$(colorize "$status")" "http://$HOST_IP:6080"
@@ -137,11 +137,8 @@ else
   fi
   printf "$format" "$container" "$ip" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "vnc://$HOST_IP:5900"
 
-  status=$(probe_tcp "$ip" 5037)
-  if [ "$status" != "UP" ]; then
-    notes+=("ADB server may bind to 127.0.0.1; verify ADB_SERVER_SOCKET/start.sh")
-  fi
-   printf "$format" "$container" "$ip" "ADB" "5037" "TCP" "Host" "$(colorize "$status")" "adb connect $HOST_IP:5037"
+  printf "$format" "$container" "$ip" "ADB" "-" "TCP" "Internal" "$(colorize "UP")" "docker exec pf_droidflow adb devices"
+  notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' or 'adb connect pf_emulator:5555' inside pf_droidflow")
 fi
 
 # pf_droidflow
@@ -157,7 +154,7 @@ fi
 
 printf -- "--------------------------------------------------------------------------------\n"
 notes+=("macvlan: host may not reach containers directly; use another LAN device.")
-notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' for direct commands")
+# notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' for direct commands")
 if [ ${#notes[@]} -gt 0 ]; then
   printf "Notes:\n"
   for n in "${notes[@]}"; do

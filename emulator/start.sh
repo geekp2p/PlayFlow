@@ -136,6 +136,10 @@ EMULATOR_PID=$!
 # Give emulator a moment to start up console
 sleep 5
 
+# Expose emulator ADB port to container network
+echo "[start] Enabling ADB TCP bridge on 0.0.0.0:5555 ..."
+socat TCP-LISTEN:5555,reuseaddr,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
+
 # Start x11vnc and noVNC
 echo "[start] Starting x11vnc..."
 x11vnc -listen 0.0.0.0 -forever -noxdamage -shared -rfbauth /root/.vnc/passwd -display :0 -rfbport 5900 &
