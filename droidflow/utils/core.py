@@ -174,7 +174,10 @@ def connect(serial: str | None = None):
                 return u2.connect(f"adb://{serial}")
             except Exception:
                 pass
-        return u2.connect()
+        try:
+            return u2.connect()
+        except Exception as e:
+            raise RuntimeError("Unable to connect to any device") from e
 
 # ───────────── paths ─────────────
 FLOW_DIR = "./flows"
