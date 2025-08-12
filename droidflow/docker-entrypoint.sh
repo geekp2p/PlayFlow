@@ -6,6 +6,10 @@ export ADB_SERVER_SOCKET="${ADB_SERVER_SOCKET:-tcp:pf_emulator:5037}"
 export ANDROID_ADB_SERVER_HOST="${ANDROID_ADB_SERVER_HOST:-pf_emulator}"
 export ANDROID_ADB_SERVER_PORT="${ANDROID_ADB_SERVER_PORT:-5037}"
 
+# Prefer the platform-tools adb bundled in the image
+export PATH="/opt/android-sdk/platform-tools:${PATH}"
+export ADB_PATH="${ADB_PATH:-/opt/android-sdk/platform-tools/adb}"
+
 # Wait until a device appears on the remote ADB server
 echo "[entry] Waiting for emulator device on ${ANDROID_ADB_SERVER_HOST}:${ANDROID_ADB_SERVER_PORT} ..."
 attempt=0

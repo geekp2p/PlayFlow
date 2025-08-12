@@ -9,9 +9,15 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       isc-dhcp-client \
       iproute2 \
       netcat-openbsd \
-      curl \
+      unzip \
       bash \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+ && curl -fsSL https://dl.google.com/android/repository/platform-tools-latest-linux.zip -o /tmp/pt.zip \
+ && unzip /tmp/pt.zip -d /opt/android-sdk \
+ && rm /tmp/pt.zip
+
+# Ensure our platform-tools adb is used first
+ENV PATH=/opt/android-sdk/platform-tools:$PATH
 
 # Set working directory
 WORKDIR /app
