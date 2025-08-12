@@ -42,7 +42,8 @@ from flask import has_request_context, request
 
 # ───────────── config ─────────────
 DEVICE_SERIAL_DEFAULT = os.getenv("DEVICE_SERIAL")  # อ่านครั้งแรก; อาจมีการ export ภายหลัง
-ADB_PATH = os.getenv("ADB_PATH", "adb")
+# Default to the platform-tools adb installed inside the container if available
+ADB_PATH = os.getenv("ADB_PATH", "/opt/android-sdk/platform-tools/adb")
 INSTANCE_NAME = os.getenv("INSTANCE_NAME")
 ADB_CONNECT_PORT = os.getenv("ADB_CONNECT_PORT", "5555")
 
@@ -102,19 +103,24 @@ def _pick_first_device_from_adb(host: str | None = None, port: str | None = None
 def ensure_device_online() -> str | None:
     """Ensure there is a connected device; update DEVICE_SERIAL if found."""
     ser = _current_device_serial()
-    if not ser:
-        return
+    # if not ser:
+    #     return
     out = ""
-    try:
-        out = subprocess.check_output(
-            _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
-        )
-        if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
-            return ser
-    except Exception:
-        out = ""
+    # try:
+    #     out = subprocess.check_output(
+    #         _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
+    #     )
+    #     if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+    #         return ser
+    # except Exception:
+    #     out = ""
     host = INSTANCE_NAME
     adb_sock = os.getenv("ADB_SERVER_SOCKET")
+    # if host and not adb_sock:
+    
+    # Always attempt to connect to the emulator if a host is provided and we're
+    # using the local ADB server. This supports containerized setups where the
+    # device isn't pre-attached.
     if host and not adb_sock:    
         subprocess.run(
             [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
@@ -123,14 +129,23 @@ def ensure_device_online() -> str | None:
             check=False,
         )
         time.sleep(1)
+        # try:
+        #     out = subprocess.check_output(
+        #         _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
+        #     )
+        #     if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+        #         return ser
+        # except Exception:
+        #     out = ""
         try:
             out = subprocess.check_output(
                 _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore"
             )
-            if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
-                return ser
         except Exception:
-            out = ""
+            return None
+
+    if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
+        return ser
 
     for line in out.splitlines()[1:]:
         line = line.strip()

@@ -12,7 +12,7 @@ import uiautomator2 as u2
 
 # ───────────── config ─────────────
 DEVICE_SERIAL  = os.getenv("DEVICE_SERIAL")
-ADB_PATH       = os.getenv("ADB_PATH", "adb")
+ADB_PATH       = os.getenv("ADB_PATH", "/opt/android-sdk/platform-tools/adb")
 _SS_INTERVAL   = float(os.getenv("SS_INTERVAL", "0.02"))   # seconds between captures
 # _SS_INTERVAL   = 0.08      # ดึงภาพทุก 0.08 s (≈12 fps) — ไม่อ่าน env แล้ว
 _ENV_W         = os.getenv("SS_WIDTH")                       # raw env value (None / "auto" / int)
