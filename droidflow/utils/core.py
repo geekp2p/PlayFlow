@@ -100,7 +100,8 @@ def ensure_device_online() -> str | None:
     except Exception:
         out = ""
     host = INSTANCE_NAME
-    if host:
+    adb_sock = os.getenv("ADB_SERVER_SOCKET")
+    if host and not adb_sock:    
         subprocess.run(
             [ADB_PATH, "connect", f"{host}:{ADB_CONNECT_PORT}"],
             stdout=subprocess.DEVNULL,

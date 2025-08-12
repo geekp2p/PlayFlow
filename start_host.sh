@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# start_host.sh - Prepare host and containers for PlayFlow with ADB inside container
+# start_host.sh - Prepare host and containers for PlayFlow with ADB inside containers
 # 1. Stop host-side ADB server to avoid port conflicts
 # 2. Start Docker containers
-# 3. Launch ADB server inside pf_droidflow container, connect to emulator, and reverse port 5000
+# 3. Use ADB client inside pf_droidflow to interact with emulator and reverse port 5000
 
 # Kill host ADB server if present (suppress warning if it's not running)
 if command -v adb >/dev/null 2>&1; then
@@ -14,13 +14,15 @@ fi
 # Start containers
 docker compose up -d
 
-# Ensure ADB inside droidflow container is clean
-docker exec pf_droidflow adb kill-server >/dev/null 2>&1 || true
+# Show connected devices from inside the droidflow container
 
-docker exec pf_droidflow adb start-server
+# Ensure ADB inside droidflow container is clean
+# docker exec pf_droidflow adb kill-server >/dev/null 2>&1 || true
+
+# docker exec pf_droidflow adb start-server
 
 # Connect droidflow's ADB to the emulator and list devices
-docker exec pf_droidflow adb connect pf_emulator:5555 >/dev/null 2>&1 || true
+# docker exec pf_droidflow adb connect pf_emulator:5555 >/dev/null 2>&1 || true
 docker exec pf_droidflow adb devices
 
 # Reverse port 5000 so apps in device can reach container service
@@ -28,6 +30,6 @@ docker exec pf_droidflow adb devices
 docker exec pf_droidflow adb reverse tcp:5000 tcp:5000
 
 cat <<EOM
-Containers started. ADB is running inside pf_droidflow.
+Containers started. ADB server lives in pf_emulator.
 Port 5000 is reversed for device -> container access.
 EOM
