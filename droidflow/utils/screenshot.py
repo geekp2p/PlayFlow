@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import sys
 import threading
 import time
 import subprocess
@@ -18,6 +19,13 @@ _SS_INTERVAL   = float(os.getenv("SS_INTERVAL", "0.02"))   # seconds between cap
 _ENV_W         = os.getenv("SS_WIDTH")                       # raw env value (None / "auto" / int)
 _JPEG_Q        = int(os.getenv("SS_QUALITY", "70"))         # JPEG quality (0‑100)
 
+# Optional verbose debug logging. Enable by setting SS_DEBUG=1.
+_SS_DEBUG = os.getenv("SS_DEBUG", "").lower() not in ("", "0", "false", "no")
+
+def _dbg(msg: str) -> None:
+    """Print debug messages when SS_DEBUG is truthy."""
+    if _SS_DEBUG:
+        print(f"[screenshot] {msg}", file=sys.stderr, flush=True)
 
 # ────────────────── helpers ──────────────────
 
@@ -62,7 +70,7 @@ if _ENV_W and _ENV_W.isdigit():               # ยังกำหนด SS_WIDT
 elif _ENV_W and _ENV_W.lower() == "auto":     # หรือ SS_WIDTH=auto ก็ full width
     _TARGET_W = min(_DETECTED_W or 720, 1280)
 
-
+_dbg(f"screen width detected={_DETECTED_W} target={_TARGET_W}")
 
 class ScreenshotStreamer:
     """Capture device screenshots in a background thread and stream them as down‑scaled JPEGs.
@@ -82,14 +90,18 @@ class ScreenshotStreamer:
     # ───────────── private helpers ─────────────
     def _grab_png(self) -> bytes:
         """Capture a *raw PNG* screenshot via `adb exec-out screencap` with uiautomator2 fallback."""
+        cmd = _adb_cmd(["exec-out", "screencap", "-p"])
+        _dbg(f"capture via adb: {' '.join(cmd)}")
         try:
-            cmd = _adb_cmd(["exec-out", "screencap", "-p"])
             return subprocess.check_output(cmd, timeout=2)
-        except Exception:
+        except Exception as e:
+            _dbg(f"adb screencap failed: {e}; falling back to uiautomator2")
             buf = io.BytesIO()
             try:
                 d = u2.connect_usb(DEVICE_SERIAL) if DEVICE_SERIAL else u2.connect()
-            except Exception:
+            except Exception as e2:
+                _dbg(f"uiautomator2 connect failed: {e2}; trying adb://{DEVICE_SERIAL}")
+                
                 d = u2.connect(f"adb://{DEVICE_SERIAL}")
             d.screenshot().save(buf, format="PNG")
             return buf.getvalue()
@@ -112,17 +124,19 @@ class ScreenshotStreamer:
 
     # ───────────── worker thread ─────────────
     def _screenshot_loop(self):
+        _dbg("screenshot thread started")        
         while True:
             try:
                 jpg = self._process(self._grab_png())
                 with self._lock:
                     self._last_jpeg = jpg
-            except Exception:
-                pass
+            except Exception as e:
+                _dbg(f"screenshot loop error: {e}")
             time.sleep(_SS_INTERVAL)
 
     def _ensure_thread(self):
         if not self._thread_started:
+            _dbg("starting background capture thread")            
             threading.Thread(target=self._screenshot_loop, daemon=True).start()
             self._thread_started = True
 
@@ -132,15 +146,18 @@ class ScreenshotStreamer:
         self._ensure_thread()
         with self._lock:
             img = self._last_jpeg or self._process(self._grab_png())
+        _dbg(f"screenshot_b64 served {len(img)} bytes")    
         return base64.b64encode(img).decode()
     
     def screenshot_stream(self):
         """Yield an MJPEG stream with Content-Length per frame for throughput calculation."""
         self._ensure_thread()
+        _dbg("screenshot_stream client connected")        
         boundary_tpl = b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n"
         while True:
             with self._lock:
                 img = self._last_jpeg or self._process(self._grab_png())
+            _dbg(f"stream frame {len(img)} bytes")
             yield boundary_tpl % len(img) + img + b"\r\n"           
             time.sleep(_SS_INTERVAL)
     
