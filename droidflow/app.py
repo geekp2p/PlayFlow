@@ -92,7 +92,10 @@ def transactions():
     Returns a list of all transaction rows:
       [{ name: str, time: str, amount: str, bounds: str }, …]
     """
-    return jsonify(engine.get_transactions())
+    try:
+        return jsonify(engine.get_transactions())
+    except RuntimeError as e:
+        return jsonify({"error": str(e), "transactions": []}), 503
 
 # —— Stream ——
 @app.route("/stream")
@@ -183,7 +186,10 @@ def restart_route():
 # —— UI helpers ——
 @app.route("/elements")
 def elements():
-    return jsonify(engine.get_elements())
+    try:
+        return jsonify(engine.get_elements())
+    except RuntimeError as e:
+        return jsonify({"error": str(e), "elements": []}), 503
 
 # —— Recording control ——
 @app.route("/start_record")
@@ -393,9 +399,12 @@ def ui_connect(auth=None):
 @app.route("/screen_size")
 def screen_size():
     from utils.core import connect
-    d = connect()
-    w,h = d.window_size()
-    return jsonify({"w": w, "h": h})
+    try:
+        d = connect()
+        w,h = d.window_size()
+        return jsonify({"w": w, "h": h})
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 503
 
 # @app.route("/screen_size")
 # def screen_size():
