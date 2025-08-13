@@ -17,12 +17,17 @@ docker compose up -d
 # Show connected devices from inside the droidflow container
 
 # Ensure ADB inside droidflow container is clean
-# docker exec pf_droidflow adb kill-server >/dev/null 2>&1 || true
+docker exec pf_droidflow adb kill-server >/dev/null 2>&1 || true
+docker exec pf_droidflow adb start-server >/dev/null 2>&1
 
-# docker exec pf_droidflow adb start-server
+# Connect droidflow's ADB to the emulator; retry until successful
+echo "Connecting pf_droidflow to emulator via ADB..."
+until docker exec pf_droidflow adb connect pf_emulator:5555 >/dev/null 2>&1; do
+  echo "Waiting for emulator ADB..."
+  sleep 2
+done
 
-# Connect droidflow's ADB to the emulator and list devices
-# docker exec pf_droidflow adb connect pf_emulator:5555 >/dev/null 2>&1 || true
+# List connected devices
 docker exec pf_droidflow adb devices
 
 # Reverse port 5000 so apps in device can reach container service
