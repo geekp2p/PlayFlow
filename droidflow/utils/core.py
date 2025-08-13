@@ -52,13 +52,24 @@ def _current_device_serial() -> str | None:
     """อ่าน DEVICE_SERIAL สดจาก env ทุกครั้ง."""
     return os.environ.get("DEVICE_SERIAL", DEVICE_SERIAL_DEFAULT)
 
-def _adb_cmd(extra: list[str]) -> list[str]:
+def _adb_cmd(extra: list[str], *, include_serial: bool = True) -> list[str]:
     """
-    Return adb command list honoring DEVICE_SERIAL (live) และ ADB_PATH.
+    Construct an ``adb`` command honoring ``DEVICE_SERIAL`` and any remote
+    ADB server settings.
+
+    Parameters
+    ----------
+    extra:
+        Additional arguments to append to the command.
+    include_serial:
+        When ``False`` the ``-s <serial>`` flag is omitted.  This is useful for
+        commands such as ``adb devices`` which must query *all* devices rather
+        than a single, potentially stale serial.
     """
+
     base = [ADB_PATH]
 
-    # honor ADB_SERVER_SOCKET for remote servers, e.g. tcp:host:port
+    # honour ADB_SERVER_SOCKET for remote servers, e.g. ``tcp:host:port``
     adb_sock = os.getenv("ADB_SERVER_SOCKET")
     if adb_sock and adb_sock.startswith("tcp:"):
         hostport = adb_sock[4:]
@@ -71,9 +82,10 @@ def _adb_cmd(extra: list[str]) -> list[str]:
         if port:
             base += ["-P", port]
 
-    ser = _current_device_serial()
-    if ser:
-        base += ["-s", ser]
+    if include_serial:
+        ser = _current_device_serial()
+        if ser:
+            base += ["-s", ser]
     return base + extra
 
 def _pick_first_device_from_adb(host: str | None = None, port: str | None = None) -> str | None:
@@ -156,7 +168,10 @@ def ensure_device_online(timeout: int = 30, interval: float = 1.0) -> str | None
         #     out = ""
         try:
             out = subprocess.check_output(
-                _adb_cmd(["devices"]), text=True, timeout=3, errors="ignore",
+                _adb_cmd(["devices"], include_serial=False),
+                text=True,
+                timeout=3,
+                errors="ignore",
             )
         except Exception:
             out = ""
@@ -164,15 +179,16 @@ def ensure_device_online(timeout: int = 30, interval: float = 1.0) -> str | None
         if ser and re.search(rf"^{re.escape(ser)}\s+device$", out, re.M):
             return ser
 
-        # for line in out.splitlines()[1:]:
-        #     line = line.strip()
-        #     if not line:
-        #         continue
-        #     m = re.match(r"^(\S+)\s+device$", line)
-        #     if m:
-        #         new_ser = m.group(1)
-        #         os.environ["DEVICE_SERIAL"] = new_ser
-        #         return new_ser
+        # No match for current serial; attempt to pick the first available
+        for line in out.splitlines()[1:]:
+            line = line.strip()
+            if not line:
+                continue
+            m = re.match(r"^(\S+)\s+device$", line)
+            if m:
+                new_ser = m.group(1)
+                os.environ["DEVICE_SERIAL"] = new_ser
+                return new_ser
 
         time.sleep(interval)
 

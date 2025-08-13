@@ -9,7 +9,7 @@ tree /f
 echo.
 
 REM — รวมแพทเทิร์นไฟล์ที่ต้องการอ่านเนื้อหา
-set "PATTERNS=Makefile core.py screenshto.py videostream.py app.py engine.py runner.py show-endpoints.sh index.html Dockerfile* Dockerfile.droidflow terminal.html prepare-android-cache.sh start.sh requirements.txt emu.log droidflow.log docker-compose.yml environment.yml supervisord.conf *.conf *.ini .env"
+set "PATTERNS=docker-compose.yml .env core.py docker-entrypoint.sh Dockerfile start.sh emu-33-playstore.ini emu.log droidflow.log"
 
 REM — 2) แสดงเนื้อหาไฟล์ในโฟลเดอร์หลัก (root)
 echo.
