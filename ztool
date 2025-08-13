@@ -1,0 +1,36 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+docker exec pf_droidflow bash -lc 'adb -H pf_emulator -P 5037 -s emulator-5554 exec-out screencap -p' > snap-$(date +%Y%m%d-%H%M%S).png
+
+
+docker inspect pf_droidflow --format '{{json .NetworkSettings.Ports}}' | jq
+sudo ss -lntp '( sport = :5000 )'
