@@ -59,10 +59,10 @@ Replace `<host-ip>` with the IP address of the machine running PlayFlow. ADB is 
 * Ensure `curl` and `nc` (`netcat-openbsd`) are installed; the script warns if missing.
 * If ADB is DOWN or you see `ECONNREFUSED` errors, ensure the emulator is
   reachable on the Docker network. The droidflow container now starts its own
-  ADB server and connects to `pf_emulator:5555` automatically.
+  ADB server and connects to `pf_emulator:5556` automatically.
 * Python tools rely on the `adbutils` library which talks to the local `adb`
   server. When running Python manually inside the container, ensure the
-  emulator is connected by issuing `adb connect pf_emulator:5555` first.
+  emulator is connected by issuing `adb connect pf_emulator:5556` first.
 * For VNC issues, verify the password file `/root/.vnc/passwd`.
 * For high-performance video streaming, install `scrcpy` or set
   `SCRCPY_SERVER_JAR` to the path of `scrcpy-server.jar`. On Ubuntu the file is

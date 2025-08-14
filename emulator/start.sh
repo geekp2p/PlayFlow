@@ -138,13 +138,11 @@ EMULATOR_PID=$!
 # Give emulator a moment to start up console
 sleep 5
 
-# Expose emulator ADB port to container network (skip if already bound)
-echo "[start] Enabling ADB TCP bridge on 0.0.0.0:5555 ..."
-if ss -ltn 2>/dev/null | grep -q '0\.0\.0\.0:5555'; then
-  echo "[start] Port 5555 already in use, skipping socat"
-else
-  socat TCP-LISTEN:5555,reuseaddr,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
-fi
+# Expose emulator ADB port to container network on a dedicated port
+ADB_BRIDGE_PORT="${ADB_BRIDGE_PORT:-5556}"
+echo "[start] Bridging ADB to 0.0.0.0:${ADB_BRIDGE_PORT} ..."
+pkill socat >/dev/null 2>&1 || true
+socat TCP-LISTEN:${ADB_BRIDGE_PORT},reuseaddr,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
 
 # Start x11vnc and noVNC
 echo "[start] Starting x11vnc..."

@@ -41,10 +41,10 @@ sudo ss -lntp '( sport = :5000 )'
 docker exec pf_emulator adb kill-server
 docker exec pf_emulator adb start-server
 docker exec pf_emulator adb -s emulator-5554 tcpip 5555
-docker exec pf_emulator adb -s emulator-5554 forward tcp:5555 tcp:5555
+docker exec pf_emulator adb -s emulator-5554 forward tcp:5556 tcp:5555
 
 # ใน pf_droidflow
 docker exec pf_droidflow adb kill-server
 docker exec pf_droidflow adb start-server
-docker exec pf_droidflow adb connect pf_emulator:5555
+docker exec pf_droidflow adb connect pf_emulator:5556
 docker exec pf_droidflow adb devices

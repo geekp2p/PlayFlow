@@ -45,7 +45,7 @@ DEVICE_SERIAL_DEFAULT = os.getenv("DEVICE_SERIAL")  # อ่านครั้�
 # Default to the platform-tools adb installed inside the container if available
 ADB_PATH = os.getenv("ADB_PATH", "/opt/android-sdk/platform-tools/adb")
 INSTANCE_NAME = os.getenv("INSTANCE_NAME")
-ADB_CONNECT_PORT = os.getenv("ADB_CONNECT_PORT", "5555")
+ADB_CONNECT_PORT = os.getenv("ADB_CONNECT_PORT", "5556")
 
 # ───────────── runtime env helpers ─────────────
 def _current_device_serial() -> str | None:

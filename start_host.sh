@@ -22,7 +22,7 @@ docker exec pf_droidflow adb start-server >/dev/null 2>&1
 
 # Connect droidflow's ADB to the emulator; retry until successful
 echo "Connecting pf_droidflow to emulator via ADB..."
-until docker exec pf_droidflow adb connect pf_emulator:5555 >/dev/null 2>&1; do
+until docker exec pf_droidflow adb connect pf_emulator:5556 >/dev/null 2>&1; do
   echo "Waiting for emulator ADB..."
   sleep 2
 done

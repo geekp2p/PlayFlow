@@ -22,7 +22,7 @@ else
   # Connect the local adb server to the emulator before waiting for a device
   if [ -n "${INSTANCE_NAME:-}" ]; then
     for i in $(seq 1 30); do
-      "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5555}" >/dev/null 2>&1 && break
+      "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 && break
       sleep 1
     done
   fi
@@ -36,7 +36,7 @@ fi
 # container until a device shows up. This mirrors the previous single-shot
 # connect but is resilient when the emulator takes a long time to start.
 if [ -z "${ADB_SERVER_SOCKET:-}" ] && [ -n "${INSTANCE_NAME:-}" ]; then
-  adb connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5555}" >/dev/null 2>&1 || true
+  adb connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 || true
 fi
 
 # Wait until a device appears on the (possibly remote) ADB server
@@ -52,12 +52,12 @@ until ser="$($ADB_PATH devices | awk '/device$/ {print $1; exit}')"; do
     break
   fi
   if [ -z "${ADB_SERVER_SOCKET:-}" ] && [ -n "${INSTANCE_NAME:-}" ]; then
-    adb connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5555}" >/dev/null 2>&1 || true
+    adb connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 || true
   fi
   sleep 2
   # retry connecting in case previous attempt happened before adb was ready
   if [ -n "${INSTANCE_NAME:-}" ] && [ -z "$ADB_SERVER_SOCKET" ]; then
-    "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5555}" >/dev/null 2>&1 || true
+    "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 || true
   fi
 done
 

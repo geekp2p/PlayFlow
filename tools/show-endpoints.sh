@@ -138,7 +138,7 @@ else
   printf "$format" "$container" "$ip" "VNC" "5900" "TCP" "VNC client" "$(colorize "$status")" "vnc://$HOST_IP:5900"
 
   printf "$format" "$container" "$ip" "ADB" "-" "TCP" "Internal" "$(colorize "UP")" "docker exec pf_droidflow adb devices"
-  notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' or 'adb connect pf_emulator:5555' inside pf_droidflow")
+  notes+=("ADB is internal; run 'docker exec pf_droidflow adb ...' or 'adb connect pf_emulator:5556' inside pf_droidflow")
 fi
 
 # pf_droidflow
