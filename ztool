@@ -20,6 +20,14 @@
 
 
 
+# connect to the emulator’s adb daemon
+docker exec pf_droidflow adb connect pf_emulator:5556
+
+# confirm the device is visible
+docker exec pf_droidflow adb devices
+
+# capture a screenshot
+docker exec pf_droidflow bash -lc 'adb exec-out screencap -p' > snap-$(date +%Y%m%d-%H%M%S).png
 
 
 
