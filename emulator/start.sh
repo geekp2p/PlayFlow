@@ -93,7 +93,9 @@ while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done
 # Start ADB server
 echo "[start] Starting ADB server..."
 adb kill-server || true
-adb -a -P "${ADB_PORT:-5037}" server nodaemon &
+ADB_PORT="${ADB_PORT:-5037}"
+export ADB_SERVER_SOCKET="tcp:0.0.0.0:${ADB_PORT}"
+adb server nodaemon &
 ADB_PID=$!
 
 # Cleanup handler
@@ -138,7 +140,7 @@ sleep 5
 
 # Expose emulator ADB port to container network (skip if already bound)
 echo "[start] Enabling ADB TCP bridge on 0.0.0.0:5555 ..."
-if ss -ltpn 2>/dev/null | grep -q ':5555'; then
+if ss -ltn 2>/dev/null | grep -q '0\.0\.0\.0:5555'; then
   echo "[start] Port 5555 already in use, skipping socat"
 else
   socat TCP-LISTEN:5555,reuseaddr,fork,bind=0.0.0.0 TCP:127.0.0.1:5555 &
