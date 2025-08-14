@@ -38,7 +38,7 @@ To interact with a connected Android device directly from the `pf_droidflow` con
 ./start_host.sh
 ```
 
-The script stops any host-side ADB server, starts the Docker stack, launches an ADB server inside `pf_droidflow`, and performs `adb reverse tcp:5000 tcp:5000` so apps on the device can reach the web UI at `http://127.0.0.1:5000`.
+The script stops any host-side ADB server, starts the Docker stack, launches an ADB server inside `pf_droidflow`, and connects to `pf_emulator:5556`. It waits for the emulator to be detected before running `adb reverse tcp:5000 tcp:5000` so apps on the device can reach the web UI at `http://127.0.0.1:5000`.
 
 ## Services & Ports
 

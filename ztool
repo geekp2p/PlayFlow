@@ -48,3 +48,13 @@ docker exec pf_droidflow adb kill-server
 docker exec pf_droidflow adb start-server
 docker exec pf_droidflow adb connect pf_emulator:5556
 docker exec pf_droidflow adb devices
+
+
+เริ่ม stack ได้ด้วย make up (หรือ docker compose up -d) ซึ่งจะ build และ start คอนเทนเนอร์ทั้งหมด
+
+หากต้องการให้ ADB ภายในคอนเทนเนอร์ reverse port 5000 ให้รัน ./start_host.sh ซึ่งจะ kill ADB ฝั่งโฮสต์, start stack และทำ adb reverse tcp:5000 tcp:5000 ให้โดยอัตโนมัติ
+
+เมื่อคอนเทนเนอร์ทำงานแล้ว Web UI ของ pf_droidflow จะถูกเปิดบนพอร์ต 5000 ของเครื่องโฮสต์ เข้าถึงได้ที่ http://<host-ip>:5000/
+
+Testing
+⚠️ No tests were executed; response based on static inspection of repository files.
