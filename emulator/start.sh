@@ -94,8 +94,7 @@ while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done
 echo "[start] Starting ADB server..."
 adb kill-server || true
 ADB_PORT="${ADB_PORT:-5037}"
-export ADB_SERVER_SOCKET="tcp:0.0.0.0:${ADB_PORT}"
-adb server nodaemon &
+adb -a -P "${ADB_PORT}" server nodaemon &
 ADB_PID=$!
 
 # Cleanup handler
