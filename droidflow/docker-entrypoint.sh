@@ -21,7 +21,7 @@ if [ -n "${ADB_SERVER_SOCKET:-}" ]; then
 else
   # Connect the local adb server to the emulator before waiting for a device
   if [ -n "${INSTANCE_NAME:-}" ]; then
-    for i in $(seq 1 30); do
+    for _ in $(seq 1 30); do
       "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 && break
       sleep 1
     done
@@ -45,8 +45,12 @@ port="${ANDROID_ADB_SERVER_PORT:-5037}"
 echo "[entry] Waiting for emulator device on ${host}:${port} ..."
 attempt=0
 ser=""
-until ser="$($ADB_PATH devices | awk '/device$/ {print $1; exit}')"; do
+until [ -n "$ser" ]; do
   attempt=$((attempt+1))
+  ser="$($ADB_PATH devices | awk '/device$/ {print $1; exit}')"
+  if [ -n "$ser" ]; then
+    break
+  fi
   if [ "$attempt" -ge 60 ]; then
     echo "[entry] WARN: no device found from 'adb devices'"
     break
