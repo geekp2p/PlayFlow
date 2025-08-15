@@ -60,7 +60,7 @@ until [ -n "$ser" ]; do
   fi
   sleep 2
   # retry connecting in case previous attempt happened before adb was ready
-  if [ -n "${INSTANCE_NAME:-}" ] && [ -z "$ADB_SERVER_SOCKET" ]; then
+  if [ -n "${INSTANCE_NAME:-}" ] && [ -z "${ADB_SERVER_SOCKET:-}" ]; then
     "$ADB_PATH" connect "${INSTANCE_NAME}:${ADB_CONNECT_PORT:-5556}" >/dev/null 2>&1 || true
   fi
 done
