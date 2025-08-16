@@ -424,7 +424,16 @@ def sleep_if_needed():
 # ───────────── actions & flows ─────────────
 def get_elements() -> list[dict]:
     d = connect()
-    root = ET.fromstring(d.dump_hierarchy(compressed=False, pretty=True))
+    try:
+        xml = d.dump_hierarchy(compressed=False, pretty=True)
+    except Exception as e:
+        log(f"dump fail {e}")
+        return []
+    try:
+        root = ET.fromstring(xml)
+    except Exception as e:
+        log(f"parse fail {e}")
+        return []
     raw = [(list(map(int, re.findall(r'\d+', n.get('bounds') or ''))), n)
            for n in root.iter('node') if n.get('clickable') == 'true']
     keep = [n for i,(b1,n) in enumerate(raw)
